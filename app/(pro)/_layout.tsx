@@ -6,30 +6,40 @@ import { View, ActivityIndicator } from 'react-native';
 
 export default function ProLayout() {
   const router = useRouter();
-  const { token, activeRole } = useAuthStore();
-  const { data: user, isLoading } = useMe();
+  const { token, isInitialized } = useAuthStore();
+  const { data: user, isLoading, isError } = useMe();
+
+  const isAuthorized = Boolean(
+    isInitialized &&
+    token &&
+    user &&
+    Array.isArray(user.roles) &&
+    user.roles.includes('provider')
+  );
 
   useEffect(() => {
-    if (!token) {
+    if (!isInitialized) return;
+
+    if (!token || isError) {
       router.replace('/(auth)/login');
       return;
     }
 
-    if (activeRole !== 'provider') {
-      router.replace('/(cliente)');
-      return;
+    if (!isLoading && user && !user.roles.includes('provider')) {
+      // Si el usuario no tiene rol provider en el servidor, redirigir a cliente
+      if (user.roles.includes('client')) {
+        router.replace('/(cliente)');
+      } else {
+        router.replace('/(auth)/login');
+      }
     }
+  }, [token, isInitialized, isLoading, isError, user, router]);
 
-    if (user && !user.roles.includes('provider')) {
-      // Si el usuario no tiene asignado el rol de proveedor en el backend (Correction #5)
-      router.replace('/(cliente)');
-    }
-  }, [token, activeRole, user, router]);
-
-  if (isLoading) {
+  // Si está cargando o no está explícitamente autorizado, NO pintar contenido protegido
+  if (!isInitialized || isLoading || !isAuthorized) {
     return (
-      <View className="flex-1 justify-center items-center bg-slate-50 dark:bg-slate-900">
-        <ActivityIndicator size="large" color="#0284C7" />
+      <View className="flex-1 justify-center items-center bg-[#08080A]">
+        <ActivityIndicator size="large" color="#7C5CFF" />
       </View>
     );
   }

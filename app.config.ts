@@ -7,18 +7,20 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   version: '1.0.0',
   orientation: 'portrait',
   icon: './assets/icon.png',
-  userInterfaceStyle: 'automatic',
+  userInterfaceStyle: 'dark',
   scheme: 'lizto',
   ios: {
     supportsTablet: false,
     bundleIdentifier: 'com.lizto.app',
+    userInterfaceStyle: 'dark',
   },
   android: {
     adaptiveIcon: {
       foregroundImage: './assets/adaptive-icon.png',
-      backgroundColor: '#1E293B',
+      backgroundColor: '#08080A',
     },
     package: 'com.lizto.app',
+    userInterfaceStyle: 'dark',
   },
   web: {
     bundler: 'metro',
