@@ -1,11 +1,20 @@
+const React = require('react');
+const { NativeModules } = require('react-native');
+
+global.React = React;
+
+if (!NativeModules.UIManager) {
+  NativeModules.UIManager = {};
+}
+
 jest.mock('expo-secure-store', () => {
-  let store: Record<string, string> = {};
+  let store = {};
   return {
-    setItemAsync: jest.fn(async (key: string, val: string) => {
+    setItemAsync: jest.fn(async (key, val) => {
       store[key] = val;
     }),
-    getItemAsync: jest.fn(async (key: string) => store[key] || null),
-    deleteItemAsync: jest.fn(async (key: string) => {
+    getItemAsync: jest.fn(async (key) => store[key] || null),
+    deleteItemAsync: jest.fn(async (key) => {
       delete store[key];
     }),
   };

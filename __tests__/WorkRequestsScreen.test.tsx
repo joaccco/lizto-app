@@ -24,8 +24,8 @@ describe('Criterios de Aceptación: Pantalla de Solicitudes y Componentes de Est
     created_at: '2026-08-21T20:00:00.000Z',
   };
 
-  test('8a. Renderiza la tarjeta de solicitud mostrando categoría, prompt, zona aproximada y urgencia', () => {
-    const { getByText, getByTestId } = render(<WorkRequestCard item={mockWorkRequest} />);
+  test('8a. Renderiza la tarjeta de solicitud mostrando categoría, prompt, zona aproximada y urgencia', async () => {
+    const { getByText, getByTestId } = await render(<WorkRequestCard item={mockWorkRequest} />);
 
     expect(getByTestId('work-request-card')).toBeTruthy();
     expect(getByText('Plomería')).toBeTruthy();
@@ -33,8 +33,8 @@ describe('Criterios de Aceptación: Pantalla de Solicitudes y Componentes de Est
     expect(getByText('Centro')).toBeTruthy();
   });
 
-  test('8b. Renderiza el estado de carga mediante skeleton de contenido', () => {
-    const { getByTestId } = render(<WorkRequestSkeleton />);
+  test('8b. Renderiza el estado de carga mediante skeleton de contenido', async () => {
+    const { getByTestId } = await render(<WorkRequestSkeleton />);
 
     expect(getByTestId('work-requests-skeleton')).toBeTruthy();
   });

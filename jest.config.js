@@ -9,5 +9,6 @@ module.exports = {
     '^@app/(.*)$': '<rootDir>/app/$1',
     'react-native-css-interop/jsx-runtime': 'react/jsx-runtime',
     'react-native-css-interop/jsx-dev-runtime': 'react/jsx-dev-runtime',
+    '^test-renderer$': 'react-test-renderer',
   },
 };

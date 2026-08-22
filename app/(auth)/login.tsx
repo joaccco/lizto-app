@@ -168,7 +168,7 @@ export default function LoginScreen() {
 
         {/* Submit Button */}
         <Pressable
-          onPress={handleSubmit(onSubmit)}
+          onPress={() => { handleSubmit(onSubmit)(); }}
           disabled={loading}
           className="bg-sky-600 hover:bg-sky-700 active:bg-sky-800 py-4 rounded-xl items-center shadow-md mt-6"
           testID="login-submit-button"

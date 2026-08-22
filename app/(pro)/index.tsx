@@ -105,7 +105,7 @@ export default function ProWorkRequestsScreen() {
           refreshControl={
             <RefreshControl
               refreshing={isRefetching}
-              onRefresh={refetch}
+              onRefresh={() => { refetch(); }}
               tintColor="#0284C7"
               colors={['#0284C7']}
             />
