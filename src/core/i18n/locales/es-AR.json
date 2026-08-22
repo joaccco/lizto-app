@@ -1,0 +1,37 @@
+{
+  "auth": {
+    "title": "Iniciar Sesión",
+    "subtitle": "Ingresá a Lizto para gestionar tus servicios",
+    "emailLabel": "Correo electrónico",
+    "emailPlaceholder": "tu@email.com",
+    "passwordLabel": "Contraseña",
+    "passwordPlaceholder": "••••••••",
+    "loginButton": "Ingresar",
+    "loggingIn": "Iniciando sesión...",
+    "invalidCredentials": "Las credenciales no son correctas.",
+    "roleSelector": "Acceder como",
+    "roleProvider": "Profesional",
+    "roleClient": "Cliente"
+  },
+  "workRequests": {
+    "title": "Solicitudes disponibles",
+    "subtitle": "Oportunidades de trabajo cerca tuyo",
+    "emptyTitle": "No hay solicitudes disponibles",
+    "emptySubtitle": "En este momento no hay solicitudes activas en tus categorías. Te notificaremos apenas ingrese un nuevo trabajo.",
+    "errorTitle": "Error al cargar las solicitudes",
+    "errorSubtitle": "Ocurrió un problema de conexión. Intentá nuevamente.",
+    "retryButton": "Reintentar",
+    "urgency": {
+      "urgent": "Urgente",
+      "high": "Alta",
+      "normal": "Normal",
+      "scheduled": "Programado"
+    },
+    "viewDetails": "Ver detalle"
+  },
+  "common": {
+    "logout": "Cerrar sesión",
+    "loading": "Cargando...",
+    "error": "Error"
+  }
+}

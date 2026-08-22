@@ -1,0 +1,40 @@
+# dependencias
+node_modules/
+
+# Expo
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+
+# nativo (generado por prebuild / CNG)
+/ios
+/android
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# Metro
+.metro-health-check*
+
+# logs
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# entorno — nunca commitear secretos
+.env
+.env.local
+.env*.local
+
+# TypeScript
+*.tsbuildinfo
+
+# macOS
+.DS_Store
+
+# basura de comandos mal formados
+--*/
