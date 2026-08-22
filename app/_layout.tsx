@@ -2,11 +2,28 @@ import React, { useEffect } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import * as SplashScreen from 'expo-splash-screen';
+import {
+  useFonts,
+  Manrope_400Regular,
+  Manrope_500Medium,
+  Manrope_600SemiBold,
+  Manrope_700Bold,
+  Manrope_800ExtraBold,
+} from '@expo-google-fonts/manrope';
+import {
+  IBMPlexMono_400Regular,
+  IBMPlexMono_500Medium,
+  IBMPlexMono_600SemiBold,
+} from '@expo-google-fonts/ibm-plex-mono';
 import { useAuthStore } from '@/features/auth/store/useAuthStore';
 import { useMe } from '@/features/auth/api/useMe';
 import { subscribeOnUnauthorized } from '@/core/api/httpClient';
 import '@/core/i18n';
 import '../global.css';
+
+// Prevenir ocultamiento automático del splash screen hasta completar la carga de fuentes
+SplashScreen.preventAutoHideAsync().catch(() => {});
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -21,11 +38,28 @@ function RootLayoutNav() {
   const router = useRouter();
   const segments = useSegments();
   const { token, activeRole, isInitialized, initializeSession, deriveActiveRoleFromUser, logout } = useAuthStore();
-  const { data: user, isLoading } = useMe();
+  const { data: user } = useMe();
+
+  const [fontsLoaded, fontError] = useFonts({
+    Manrope_400Regular,
+    Manrope_500Medium,
+    Manrope_600SemiBold,
+    Manrope_700Bold,
+    Manrope_800ExtraBold,
+    IBMPlexMono_400Regular,
+    IBMPlexMono_500Medium,
+    IBMPlexMono_600SemiBold,
+  });
 
   useEffect(() => {
     initializeSession();
   }, []);
+
+  useEffect(() => {
+    if (fontsLoaded || fontError) {
+      SplashScreen.hideAsync().catch(() => {});
+    }
+  }, [fontsLoaded, fontError]);
 
   // Suscribirse a respuestas 401 para limpiar sesión de forma reactiva
   useEffect(() => {
@@ -44,7 +78,7 @@ function RootLayoutNav() {
 
   // Protección y ruteo reactivo basado en sesión y rol activo derivado
   useEffect(() => {
-    if (!isInitialized) return;
+    if (!isInitialized || (!fontsLoaded && !fontError)) return;
 
     const inAuthGroup = segments[0] === '(auth)';
 
@@ -57,9 +91,9 @@ function RootLayoutNav() {
         router.replace('/(cliente)');
       }
     }
-  }, [token, activeRole, user, isInitialized, segments]);
+  }, [token, activeRole, user, isInitialized, fontsLoaded, fontError, segments]);
 
-  if (!isInitialized) {
+  if (!isInitialized || (!fontsLoaded && !fontError)) {
     return null;
   }
 
