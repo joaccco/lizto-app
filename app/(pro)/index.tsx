@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react';
 import { View, FlatList, RefreshControl, SafeAreaView } from 'react-native';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useWorkRequests } from '@/features/work-requests/api/useWorkRequests';
 import { WorkRequestCard } from '@/features/work-requests/components/WorkRequestCard';
@@ -11,6 +11,7 @@ import { authApi } from '@/features/auth/api/authApi';
 import { GlassNav, GlassButton, EmptyState, ErrorState, Text } from '@/components/ui';
 
 export default function ProWorkRequestsScreen() {
+  const router = useRouter();
   const { t } = useTranslation();
   const { data: requests, isLoading, isError, error, refetch, isRefetching } = useWorkRequests();
   const { data: user } = useMe();
@@ -78,7 +79,14 @@ export default function ProWorkRequestsScreen() {
         <FlatList
           data={requests}
           keyExtractor={(item) => item.id}
-          renderItem={({ item }) => <WorkRequestCard item={item} />}
+          renderItem={({ item }) => (
+            <WorkRequestCard
+              item={item}
+              onPress={(selectedItem) => {
+                router.push(`/(pro)/requests/${selectedItem.id}` as any);
+              }}
+            />
+          )}
           contentContainerStyle={{ padding: 20 }}
           refreshControl={
             <RefreshControl

@@ -3,7 +3,7 @@ import { View, ViewProps } from 'react-native';
 import { Text } from './Text';
 
 export interface BadgeProps extends ViewProps {
-  variant?: 'category' | 'high' | 'medium' | 'low' | 'fluor' | 'default';
+  variant?: 'category' | 'high' | 'medium' | 'low' | 'fluor' | 'warning' | 'default';
   label: string;
   className?: string;
 }
@@ -27,6 +27,7 @@ export const Badge: React.FC<BadgeProps> = ({
           container: 'bg-danger/15 border-danger/30',
           text: '#FF5A5A',
         };
+      case 'warning':
       case 'medium':
         return {
           container: 'bg-warning/15 border-warning/30',

@@ -79,3 +79,9 @@ export async function httpClient<T>(
 
   return parseResult.data;
 }
+
+httpClient.get = <T>(endpoint: string, schema: z.ZodType<T, any, any>, options: HttpRequestOptions = {}) =>
+  httpClient<T>(endpoint, schema, { ...options, method: 'GET' });
+
+httpClient.post = <T>(endpoint: string, schema: z.ZodType<T, any, any>, body?: any, options: HttpRequestOptions = {}) =>
+  httpClient<T>(endpoint, schema, { ...options, method: 'POST', body: body ? JSON.stringify(body) : undefined });
