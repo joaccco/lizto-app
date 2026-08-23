@@ -86,4 +86,20 @@ describe('Criterios de Aceptación: Autenticación, Persistencia y Roles Dinámi
     const derivedRole = await useAuthStore.getState().deriveActiveRoleFromUser(dualUser);
     expect(derivedRole).toBe('client');
   });
+
+  test('4. El esquema de registro omite el campo role y valida datos requeridos', () => {
+    const { registerSchema } = require('../src/features/auth/schemas/authSchema');
+    const validRegisterData = {
+      name: 'Nuevo Usuario',
+      email: 'nuevo@test.com',
+      password: 'password123',
+      password_confirmation: 'password123',
+    };
+
+    const parseResult = registerSchema.safeParse(validRegisterData);
+    expect(parseResult.success).toBe(true);
+    if (parseResult.success) {
+      expect((parseResult.data as any).role).toBeUndefined();
+    }
+  });
 });

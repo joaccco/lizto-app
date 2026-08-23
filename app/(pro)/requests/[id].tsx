@@ -3,7 +3,6 @@ import { View, ScrollView, SafeAreaView, Pressable, Alert } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useWorkRequestDetail } from '@/features/work-requests/api/useWorkRequestDetail';
-import { getApproximateZone } from '@/features/work-requests/schemas/workRequestDetailSchema';
 import { useCreateOffer, useAskQuestion, useDeclineWorkRequest } from '@/features/offers/api/useOffers';
 import { GlassNav, GlassCard, GlassButton, Badge, Text, Skeleton, ErrorState } from '@/components/ui';
 import { OfferSheet } from '@/features/offers/components/OfferSheet';
@@ -22,8 +21,6 @@ export default function ProWorkRequestDetailScreen() {
   const [offerSheetVisible, setOfferSheetVisible] = useState(false);
   const [questionSheetVisible, setQuestionSheetVisible] = useState(false);
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
-
-  const approximateZone = getApproximateZone(request?.address);
 
   const handleCreateOffer = async (payload: any) => {
     try {
@@ -90,6 +87,9 @@ export default function ProWorkRequestDetailScreen() {
     );
   }
 
+  const locationText = request.location_address || request.address || 'Zona aproximada';
+  const radiusText = request.is_approximate ? ` (Radio aprox. ~${request.location_radius_meters || 500}m)` : '';
+
   return (
     <SafeAreaView className="flex-1 bg-background" testID="work-request-detail-screen">
       {/* Header Bar */}
@@ -105,7 +105,7 @@ export default function ProWorkRequestDetailScreen() {
       />
 
       <ScrollView className="flex-1 px-5 pt-4 pb-28" showsVerticalScrollIndicator={false}>
-        {/* Banner de Feedback Feedback Message */}
+        {/* Banner de Feedback Message */}
         {feedbackMessage ? (
           <View className="bg-success/15 border border-success/30 rounded-2xl p-4 mb-4">
             <Text variant="caption" weight="bold" className="text-success text-center">
@@ -136,11 +136,11 @@ export default function ProWorkRequestDetailScreen() {
               </Text>
             </Text>
 
-            {/* REGLA DE PRIVACIDAD STRICTA: Se renderiza ÚNICAMENTE la zona aproximada */}
+            {/* REGLA DE UBICACIÓN SERVIDOR: Renderiza zona y radio indicativo cuando es aproximada */}
             <Text variant="caption">
-              📍 Ubicación aprox.:{' '}
+              📍 Ubicación:{' '}
               <Text variant="caption" weight="bold" className="text-fluor" testID="approximate-zone-text">
-                {approximateZone}
+                {locationText}{radiusText}
               </Text>
             </Text>
           </View>

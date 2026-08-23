@@ -9,11 +9,11 @@ interface OfferSheetProps {
   onSubmit: (payload: {
     pricing_mode: PricingMode;
     proposed_price?: number | null;
-    price_range_min?: number | null;
-    price_range_max?: number | null;
+    price_min?: number | null;
+    price_max?: number | null;
     proposed_start_at?: string | null;
     estimated_duration_min?: number;
-    note?: string;
+    notes?: string;
   }) => Promise<void>;
   windowStart?: string | null;
   windowEnd?: string | null;
@@ -36,13 +36,12 @@ export const OfferSheet: React.FC<OfferSheetProps> = ({
   const [rangeMax, setRangeMax] = useState('');
   const [proposedTime, setProposedTime] = useState(windowStart || '10:00');
   const [durationMin, setDurationMin] = useState('60');
-  const [note, setNote] = useState('');
+  const [notes, setNotes] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
 
   const handleFormSubmit = async () => {
     setFormError(null);
 
-    // 1. Validar precio según modalidad
     let parsedPrice: number | null = null;
     let parsedMin: number | null = null;
     let parsedMax: number | null = null;
@@ -66,7 +65,6 @@ export const OfferSheet: React.FC<OfferSheetProps> = ({
       }
     }
 
-    // 2. Validar ventana horaria (Criterio de Aceptación 3)
     if (windowStart && windowEnd && proposedTime) {
       const isWithin = isTimeWithinWindow(
         `2026-08-25T${proposedTime}:00`,
@@ -81,23 +79,30 @@ export const OfferSheet: React.FC<OfferSheetProps> = ({
       }
     }
 
-    // 3. Formatear timestamp de fecha propuesta
     const targetDateStr = scheduledDate || new Date().toISOString().split('T')[0];
     const proposedIsoDate = `${targetDateStr}T${proposedTime}:00.000Z`;
 
     try {
-      await onSubmit({
+      const payload: any = {
         pricing_mode: pricingMode,
-        proposed_price: parsedPrice,
-        price_range_min: parsedMin,
-        price_range_max: parsedMax,
         proposed_start_at: proposedIsoDate,
         estimated_duration_min: parseInt(durationMin, 10) || 60,
-        note: note.trim(),
-      });
+      };
+
+      if (pricingMode === 'quoted') {
+        payload.proposed_price = parsedPrice;
+      } else {
+        payload.price_min = parsedMin;
+        payload.price_max = parsedMax;
+      }
+
+      if (notes.trim()) {
+        payload.notes = notes.trim();
+      }
+
+      await onSubmit(payload);
       onClose();
     } catch (err: any) {
-      // Preserva los valores ingresados y muestra el error (Criterio de Aceptación 5)
       setFormError(err?.message || 'Ocurrió un error al enviar la oferta. Reintentá.');
     }
   };
@@ -112,7 +117,6 @@ export const OfferSheet: React.FC<OfferSheetProps> = ({
           Propone tus condiciones económicas y estimación para el servicio.
         </Text>
 
-        {/* Banners Informativos de Dominio */}
         <View className="bg-primary/10 border border-primary/30 rounded-2xl p-3 mb-4 space-y-1">
           <Text variant="caption" className="text-primary font-medium">
             💡 Esta oferta es una propuesta estimada y no constituye un acuerdo vinculante hasta ser confirmada.
@@ -122,7 +126,6 @@ export const OfferSheet: React.FC<OfferSheetProps> = ({
           </Text>
         </View>
 
-        {/* Form Error Banner */}
         {formError ? (
           <View className="bg-danger/15 border border-danger/30 rounded-2xl p-3 mb-4">
             <Text variant="caption" className="text-danger font-semibold">
@@ -131,7 +134,6 @@ export const OfferSheet: React.FC<OfferSheetProps> = ({
           </View>
         ) : null}
 
-        {/* Modalidad de Precio */}
         <View className="mb-5">
           <Text variant="caption" weight="semibold" className="uppercase tracking-wider mb-2">
             Modalidad de Cotización
@@ -169,7 +171,6 @@ export const OfferSheet: React.FC<OfferSheetProps> = ({
           </View>
         </View>
 
-        {/* Campos de Precio según Modalidad */}
         {pricingMode === 'quoted' ? (
           <Input
             label="Importe Propuesto ($ ARS)"
@@ -213,7 +214,6 @@ export const OfferSheet: React.FC<OfferSheetProps> = ({
           </View>
         )}
 
-        {/* Horario y Duración */}
         <View className="mb-4">
           <Input
             label={`Horario Propuesto (Ventana pedida: ${windowStart || '09:00'} - ${windowEnd || '18:00'} hs)`}
@@ -235,19 +235,17 @@ export const OfferSheet: React.FC<OfferSheetProps> = ({
           />
         </View>
 
-        {/* Nota / Condiciones */}
         <Input
           label="Nota o Condiciones (Opcional)"
           placeholder="Ej: Incluye mano de obra y materiales estándar."
-          value={note}
-          onChangeText={setNote}
+          value={notes}
+          onChangeText={setNotes}
           multiline
           numberOfLines={2}
           containerClassName="mb-6"
           testID="offer-note-input"
         />
 
-        {/* Botón de Envío con Protección contra Doble Toque */}
         <GlassButton
           variant={pricingMode === 'requires_visit' ? 'fluor' : 'primary'}
           size="lg"

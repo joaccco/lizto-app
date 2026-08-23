@@ -6,12 +6,12 @@ export type PricingMode = z.infer<typeof pricingModeEnum>;
 export const createOfferSchema = z.object({
   pricing_mode: pricingModeEnum.default('quoted'),
   proposed_price: z.number().nullable().optional(),
-  price_range_min: z.number().nullable().optional(),
-  price_range_max: z.number().nullable().optional(),
+  price_min: z.number().nullable().optional(),
+  price_max: z.number().nullable().optional(),
   currency_code: z.string().default('ARS'),
   proposed_start_at: z.string().nullable().optional(),
   estimated_duration_min: z.number().min(15, 'La duración mínima es de 15 minutos').default(60),
-  note: z.string().optional(),
+  notes: z.string().max(1000, 'Las notas no pueden superar los 1000 caracteres').optional(),
 }).superRefine((data, ctx) => {
   if (data.pricing_mode === 'quoted') {
     if (data.proposed_price === undefined || data.proposed_price === null || data.proposed_price <= 0) {
@@ -21,11 +21,46 @@ export const createOfferSchema = z.object({
         message: 'El precio propuesto es obligatorio para ofertas con monto fijo.',
       });
     }
-  } else if (data.pricing_mode === 'requires_visit') {
-    if (data.price_range_min && data.price_range_max && data.price_range_min > data.price_range_max) {
+    if (data.price_min !== undefined && data.price_min !== null) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        path: ['price_range_max'],
+        path: ['price_min'],
+        message: 'No se permite especificar precio mínimo en modalidad quoted.',
+      });
+    }
+    if (data.price_max !== undefined && data.price_max !== null) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['price_max'],
+        message: 'No se permite especificar precio máximo en modalidad quoted.',
+      });
+    }
+  } else if (data.pricing_mode === 'requires_visit') {
+    if (data.proposed_price !== undefined && data.proposed_price !== null) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['proposed_price'],
+        message: 'No se permite especificar precio fijo en modalidad requires_visit.',
+      });
+    }
+    if (data.price_min === undefined || data.price_min === null || data.price_min < 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['price_min'],
+        message: 'El precio mínimo es obligatorio en modalidad requires_visit.',
+      });
+    }
+    if (data.price_max === undefined || data.price_max === null || data.price_max < 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['price_max'],
+        message: 'El precio máximo es obligatorio en modalidad requires_visit.',
+      });
+    }
+    if (data.price_min !== undefined && data.price_min !== null && data.price_max !== undefined && data.price_max !== null && data.price_min > data.price_max) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['price_max'],
         message: 'El precio máximo del rango debe ser mayor o igual al mínimo.',
       });
     }

@@ -7,6 +7,19 @@ export const loginSchema = z.object({
 
 export type LoginFormData = z.infer<typeof loginSchema>;
 
+export const registerSchema = z.object({
+  name: z.string().min(2, 'El nombre debe tener al menos 2 caracteres'),
+  email: z.string().email('Ingresá un correo electrónico válido'),
+  password: z.string().min(8, 'La contraseña debe tener al menos 8 caracteres'),
+  password_confirmation: z.string().min(8, 'La confirmación de contraseña debe tener al menos 8 caracteres'),
+  phone: z.string().optional(),
+}).refine((data) => data.password === data.password_confirmation, {
+  message: 'Las contraseñas no coinciden',
+  path: ['password_confirmation'],
+});
+
+export type RegisterFormData = z.infer<typeof registerSchema>;
+
 export const userSchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -30,6 +43,16 @@ export const loginResponseSchema = z.object({
 });
 
 export type LoginResponse = z.infer<typeof loginResponseSchema>;
+
+export const registerResponseSchema = z.object({
+  data: z.object({
+    user: userSchema,
+    token: z.string(),
+  }),
+  message: z.string(),
+});
+
+export type RegisterResponse = z.infer<typeof registerResponseSchema>;
 
 export const meResponseSchema = z.object({
   data: userSchema,

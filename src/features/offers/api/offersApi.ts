@@ -8,6 +8,9 @@ const offerResponseSchema = z.object({
     status: z.string(),
     pricing_mode: z.string(),
     proposed_price: z.number().nullable().optional(),
+    price_min: z.number().nullable().optional(),
+    price_max: z.number().nullable().optional(),
+    notes: z.string().nullable().optional(),
     currency_code: z.string(),
     round_number: z.number(),
   }),
@@ -33,14 +36,33 @@ export const offersApi = {
    * POST /v1/service-requests/{id}/offers
    */
   async store(serviceRequestId: string, data: CreateOfferFormData) {
-    const payload = {
+    const payload: Record<string, any> = {
       pricing_mode: data.pricing_mode,
-      proposed_price: data.pricing_mode === 'quoted' ? data.proposed_price : null,
       currency_code: data.currency_code || 'ARS',
-      proposed_start_at: data.proposed_start_at || null,
-      estimated_duration_min: data.estimated_duration_min || 60,
-      note: data.note,
     };
+
+    if (data.pricing_mode === 'quoted') {
+      if (data.proposed_price !== undefined && data.proposed_price !== null) {
+        payload.proposed_price = data.proposed_price;
+      }
+    } else if (data.pricing_mode === 'requires_visit') {
+      if (data.price_min !== undefined && data.price_min !== null) {
+        payload.price_min = data.price_min;
+      }
+      if (data.price_max !== undefined && data.price_max !== null) {
+        payload.price_max = data.price_max;
+      }
+    }
+
+    if (data.proposed_start_at) {
+      payload.proposed_start_at = data.proposed_start_at;
+    }
+    if (data.estimated_duration_min) {
+      payload.estimated_duration_min = data.estimated_duration_min;
+    }
+    if (data.notes) {
+      payload.notes = data.notes;
+    }
 
     return httpClient.post(
       `/v1/service-requests/${serviceRequestId}/offers`,

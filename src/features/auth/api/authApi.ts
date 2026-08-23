@@ -1,10 +1,27 @@
 import { httpClient } from '@/core/api/httpClient';
-import { loginResponseSchema, meResponseSchema, LoginFormData, LoginResponse, User } from '../schemas/authSchema';
+import {
+  loginResponseSchema,
+  registerResponseSchema,
+  meResponseSchema,
+  LoginFormData,
+  LoginResponse,
+  RegisterFormData,
+  RegisterResponse,
+  User,
+} from '../schemas/authSchema';
 import { z } from 'zod';
 
 export const authApi = {
   login: async (data: LoginFormData): Promise<LoginResponse> => {
     return httpClient<LoginResponse>('/auth/login', loginResponseSchema, {
+      method: 'POST',
+      body: JSON.stringify(data),
+      requiresAuth: false,
+    });
+  },
+
+  register: async (data: RegisterFormData): Promise<RegisterResponse> => {
+    return httpClient<RegisterResponse>('/auth/register', registerResponseSchema, {
       method: 'POST',
       body: JSON.stringify(data),
       requiresAuth: false,
