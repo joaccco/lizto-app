@@ -1,6 +1,7 @@
 import { httpClient } from '@/core/api/httpClient';
 import { z } from 'zod';
 import { CreateOfferFormData, AskQuestionFormData } from '../schemas/offerSchema';
+import { ConfirmWorkRequestPayload, confirmWorkRequestSchema } from '../schemas/confirmRequestSchema';
 
 const offerResponseSchema = z.object({
   data: z.object({
@@ -27,7 +28,7 @@ const askQuestionResponseSchema = z.object({
 
 const actionResponseSchema = z.object({
   message: z.string(),
-  data: z.any().optional(),
+  data: z.record(z.string(), z.any()).optional(),
 });
 
 export const offersApi = {
@@ -36,7 +37,7 @@ export const offersApi = {
    * POST /v1/service-requests/{id}/offers
    */
   async store(serviceRequestId: string, data: CreateOfferFormData) {
-    const payload: Record<string, any> = {
+    const payload: Record<string, string | number | boolean | null | undefined> = {
       pricing_mode: data.pricing_mode,
       currency_code: data.currency_code || 'ARS',
     };
@@ -90,11 +91,12 @@ export const offersApi = {
    * Confirmar solicitud de trabajo como profesional
    * POST /v1/provider/work-requests/{id}/confirm
    */
-  async confirmRequest(id: string, payload: any) {
+  async confirmRequest(id: string, payload?: ConfirmWorkRequestPayload) {
+    const validatedPayload = payload ? confirmWorkRequestSchema.parse(payload) : {};
     return httpClient.post(
       `/v1/provider/work-requests/${id}/confirm`,
       actionResponseSchema,
-      payload
+      validatedPayload
     );
   },
 
