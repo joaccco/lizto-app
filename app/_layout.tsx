@@ -3,8 +3,8 @@ import { Stack, useRouter, useSegments } from 'expo-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as SplashScreen from 'expo-splash-screen';
+import { useFonts } from 'expo-font';
 import {
-  useFonts,
   Manrope_400Regular,
   Manrope_500Medium,
   Manrope_600SemiBold,
@@ -34,13 +34,8 @@ const queryClient = new QueryClient({
   },
 });
 
-function RootLayoutNav() {
-  const router = useRouter();
-  const segments = useSegments();
-  const { token, activeRole, isInitialized, initializeSession, deriveActiveRoleFromUser, logout } = useAuthStore();
-  const { data: user } = useMe();
-
-  const [fontsLoaded, fontError] = useFonts({
+export function useAppFonts() {
+  return useFonts({
     Manrope_400Regular,
     Manrope_500Medium,
     Manrope_600SemiBold,
@@ -50,6 +45,15 @@ function RootLayoutNav() {
     IBMPlexMono_500Medium,
     IBMPlexMono_600SemiBold,
   });
+}
+
+function RootLayoutNav() {
+  const router = useRouter();
+  const segments = useSegments();
+  const { token, activeRole, isInitialized, initializeSession, deriveActiveRoleFromUser, logout } = useAuthStore();
+  const { data: user } = useMe();
+
+  const [fontsLoaded, fontError] = useAppFonts();
 
   useEffect(() => {
     initializeSession();

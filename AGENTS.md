@@ -140,3 +140,13 @@ Un cambio no está terminado hasta que:
 4. La app compila y corre en un build de desarrollo de Android.
 5. No hay `any`, ni literales de texto en componentes, ni URLs hardcodeadas.
 6. El resumen lista: endpoints consumidos, endpoints faltantes, defectos de backend detectados, dependencias agregadas y desvíos de estas reglas.
+
+---
+
+## Regla 11 · Un test que no puede fallar no es un test
+
+Prohibido escribir aserciones tautológicas: verificar que un componente recibió la prop que se le pasó, que una constante vale lo que dice, o que un valor mockeado es el valor del mock. Esos tests siempre pasan y producen confianza falsa, que es peor que no tener cobertura.
+
+Un test vale cuando **existe un cambio realista en el código que lo haría fallar**. Antes de escribir uno, respondé eso. Si no hay respuesta, no lo escribas.
+
+Cuando algo **no se puede verificar automáticamente** —resolución de tipografías nativas, apariencia de un desenfoque, entrega de un push, permisos del sistema operativo— decilo explícitamente y proponé la verificación manual que corresponda. **No lo cubras con un test simbólico.** Reportar "esto solo se verifica en dispositivo" es una respuesta correcta y esperada; simular cobertura no lo es.

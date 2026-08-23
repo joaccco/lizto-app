@@ -2,10 +2,19 @@ const React = require('react');
 const { NativeModules } = require('react-native');
 
 global.React = React;
+global.__mockFontsState = [true, null];
 
 if (!NativeModules.UIManager) {
   NativeModules.UIManager = {};
 }
+
+jest.mock('expo-font', () => {
+  return {
+    useFonts: jest.fn(() => global.__mockFontsState || [true, null]),
+    loadAsync: jest.fn().mockResolvedValue(true),
+    isLoaded: jest.fn(() => true),
+  };
+});
 
 jest.mock('expo-secure-store', () => {
   let store = {};

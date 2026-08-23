@@ -7,6 +7,7 @@ module.exports = {
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
     '^@app/(.*)$': '<rootDir>/app/$1',
+    '\\.(css|less|scss|sass)$': '<rootDir>/__mocks__/styleMock.js',
     'react-native-css-interop/jsx-runtime': 'react/jsx-runtime',
     'react-native-css-interop/jsx-dev-runtime': 'react/jsx-dev-runtime',
     '^test-renderer$': 'react-test-renderer',
