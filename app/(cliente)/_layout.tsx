@@ -1,50 +1,12 @@
-import React, { useEffect } from 'react';
-import { Stack, useRouter } from 'expo-router';
-import { useAuthStore } from '@/features/auth/store/useAuthStore';
-import { useMe } from '@/features/auth/api/useMe';
-import { View, ActivityIndicator } from 'react-native';
-
+import { Tabs } from 'expo-router';
+import { useTranslation } from 'react-i18next';
+import { Text } from '@/components/ui';
 export default function ClienteLayout() {
-  const router = useRouter();
-  const { token, isInitialized } = useAuthStore();
-  const { data: user, isLoading, isError } = useMe();
-
-  const isAuthorized = Boolean(
-    isInitialized &&
-    token &&
-    user &&
-    Array.isArray(user.roles) &&
-    user.roles.includes('client')
-  );
-
-  useEffect(() => {
-    if (!isInitialized) return;
-
-    if (!token || isError) {
-      router.replace('/(auth)/login');
-      return;
-    }
-
-    if (!isLoading && user && !user.roles.includes('client')) {
-      if (user.roles.includes('provider')) {
-        router.replace('/(pro)');
-      } else {
-        router.replace('/(auth)/login');
-      }
-    }
-  }, [token, isInitialized, isLoading, isError, user, router]);
-
-  if (!isInitialized || isLoading || !isAuthorized) {
-    return (
-      <View className="flex-1 justify-center items-center bg-[#08080A]">
-        <ActivityIndicator size="large" color="#7C5CFF" />
-      </View>
-    );
-  }
-
-  return (
-    <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="index" options={{ title: 'Mi Cuenta Cliente' }} />
-    </Stack>
-  );
+  const { t } = useTranslation();
+  return <Tabs screenOptions={{ headerShown: false, tabBarActiveTintColor: '#A8FF35', tabBarInactiveTintColor: '#9C99A8', tabBarStyle: { backgroundColor: '#131318', borderTopColor: '#24222C' }, tabBarLabelStyle: { fontFamily: 'Manrope_600SemiBold', fontSize: 11 } }}>
+    <Tabs.Screen name="index" options={{ title: t('navigation.home'), tabBarIcon: ({ color }) => <Text style={{ color }} variant="h2">⌂</Text> }} />
+    <Tabs.Screen name="catalog" options={{ title: t('navigation.catalog'), tabBarIcon: ({ color }) => <Text style={{ color }} variant="h2">▦</Text> }} />
+    <Tabs.Screen name="requests" options={{ title: t('navigation.requests'), tabBarIcon: ({ color }) => <Text style={{ color }} variant="h2">≡</Text> }} />
+    <Tabs.Screen name="account" options={{ title: t('navigation.account'), tabBarIcon: ({ color }) => <Text style={{ color }} variant="h2">○</Text> }} />
+  </Tabs>;
 }

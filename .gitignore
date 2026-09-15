@@ -38,3 +38,6 @@ yarn-error.*
 
 # basura de comandos mal formados
 --*/
+
+# Antigravity agent configuration (internal development only)
+.agents/

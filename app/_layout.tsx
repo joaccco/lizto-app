@@ -19,6 +19,10 @@ import {
 import { useAuthStore } from '@/features/auth/store/useAuthStore';
 import { useMe } from '@/features/auth/api/useMe';
 import { subscribeOnUnauthorized } from '@/core/api/httpClient';
+import { sessionRedirect } from '@/core/navigation/sessionRoute';
+import { View, ActivityIndicator } from 'react-native';
+import { useTranslation } from 'react-i18next';
+import { ErrorState, GlassButton } from '@/components/ui';
 import '@/core/i18n';
 import '../global.css';
 
@@ -51,12 +55,13 @@ function RootLayoutNav() {
   const router = useRouter();
   const segments = useSegments();
   const { token, activeRole, isInitialized, initializeSession, deriveActiveRoleFromUser, logout } = useAuthStore();
-  const { data: user } = useMe();
+  const { t } = useTranslation();
+  const { data: user, isError: userError, refetch } = useMe();
 
   const [fontsLoaded, fontError] = useAppFonts();
 
   useEffect(() => {
-    initializeSession();
+    void initializeSession();
   }, []);
 
   useEffect(() => {
@@ -68,7 +73,8 @@ function RootLayoutNav() {
   // Suscribirse a respuestas 401 para limpiar sesión de forma reactiva
   useEffect(() => {
     const unsubscribe = subscribeOnUnauthorized(() => {
-      logout();
+      void logout();
+      queryClient.clear();
     });
     return unsubscribe;
   }, [logout]);
@@ -84,22 +90,22 @@ function RootLayoutNav() {
   useEffect(() => {
     if (!isInitialized || (!fontsLoaded && !fontError)) return;
 
-    const inAuthGroup = segments[0] === '(auth)';
+    const destination = sessionRedirect({ token, role: user ? activeRole : null, group: segments[0] });
+    if (destination) router.replace(destination);
+  }, [token, activeRole, user, isInitialized, fontsLoaded, fontError, segments, router]);
 
-    if (!token && !inAuthGroup) {
-      router.replace('/(auth)/login');
-    } else if (token && user && activeRole && inAuthGroup) {
-      if (activeRole === 'provider') {
-        router.replace('/(pro)');
-      } else {
-        router.replace('/(cliente)');
-      }
-    }
-  }, [token, activeRole, user, isInitialized, fontsLoaded, fontError, segments]);
 
   if (!isInitialized || (!fontsLoaded && !fontError)) {
     return null;
   }
+
+  if (token && userError) {
+    return <View className="flex-1 bg-background justify-center p-6 gap-4"><ErrorState message={t('catalog.errorDescription')} onRetry={() => void refetch()} /><GlassButton variant="outline" onPress={() => { void logout(); queryClient.clear(); }}>{t('common.logout')}</GlassButton></View>;
+  }
+  if (token && (!user || !activeRole || sessionRedirect({ token, role: activeRole, group: segments[0] }))) {
+    return <View className="flex-1 bg-background justify-center"><ActivityIndicator color="#7C5CFF" accessibilityLabel={t('common.loading')} /></View>;
+  }
+  if (!token && (segments[0] === '(pro)' || segments[0] === 'chat')) return null;
 
   return (
     <Stack

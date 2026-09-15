@@ -1,6 +1,8 @@
 import React from 'react';
-import { render } from '@testing-library/react-native';
+import { render, waitFor } from '@testing-library/react-native';
 import { useAuthStore } from '@/features/auth/store/useAuthStore';
+
+jest.mock('react-native-safe-area-context', () => require('react-native-safe-area-context/jest/mock').default);
 
 // Mock app/_layout useAppFonts
 jest.mock('../app/_layout', () => {
@@ -23,7 +25,10 @@ jest.mock('expo-router', () => ({
   useRouter: () => ({ replace: jest.fn() }),
   useSegments: () => ['(auth)'],
   Stack: Object.assign(
-    ({ children }: { children: React.ReactNode }) => <>{children}</>,
+    ({ children }: { children: React.ReactNode }) => {
+      const { View } = require('react-native');
+      return <View testID="root-stack">{children}</View>;
+    },
     { Screen: () => null }
   ),
 }));
@@ -51,16 +56,16 @@ describe('Carga de fuentes en Layout Raíz (RootLayout)', () => {
   test('SÍ renderiza los hijos cuando las fuentes han cargado ([true, null])', async () => {
     global.__mockFontsState = [true, null];
 
-    const { container } = await render(<RootLayout />);
+    const { getByTestId } = render(<RootLayout />);
     // Al cargar las fuentes, el layout libera el árbol de componentes
-    expect(container).toBeTruthy();
+    await waitFor(() => expect(getByTestId('root-stack')).toBeTruthy());
   });
 
   test('SÍ renderiza los hijos si ocurrió un error al cargar fuentes ([false, Error])', async () => {
     global.__mockFontsState = [false, new Error('Error al cargar fuente')];
 
-    const { container } = await render(<RootLayout />);
+    const { getByTestId } = render(<RootLayout />);
     // Ante un error de carga de fuente, no se bloquea indefinidamente la app
-    expect(container).toBeTruthy();
+    await waitFor(() => expect(getByTestId('root-stack')).toBeTruthy());
   });
 });

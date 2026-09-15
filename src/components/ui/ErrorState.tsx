@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { View, ViewProps } from 'react-native';
 import { Text } from './Text';
 import { GlassButton } from './GlassButton';
@@ -12,7 +13,7 @@ export interface ErrorStateProps extends ViewProps {
 }
 
 export const ErrorState: React.FC<ErrorStateProps> = ({
-  title = 'Ocurrió un error',
+  title,
   message,
   onRetry,
   testID = 'error-state',
@@ -20,6 +21,7 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
   className = '',
   ...props
 }) => {
+  const { t } = useTranslation();
   return (
     <View
       testID={testID}
@@ -28,14 +30,14 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
       {...props}
     >
       <Text variant="h3" weight="bold" className="text-danger text-center mb-2">
-        {title}
+        {title || t('common.errorTitle')}
       </Text>
       <Text variant="body" muted className="text-center mb-6 max-w-[280px]">
         {message}
       </Text>
       {onRetry ? (
         <GlassButton variant="danger" size="md" onPress={onRetry}>
-          Reintentar
+          {t('common.retry')}
         </GlassButton>
       ) : null}
     </View>

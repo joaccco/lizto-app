@@ -11,7 +11,9 @@
     "invalidCredentials": "Las credenciales no son correctas.",
     "roleSelector": "Acceder como",
     "roleProvider": "Profesional",
-    "roleClient": "Cliente"
+    "roleClient": "Cliente",
+    "browse": "Explorar sin iniciar sesión",
+    "connectionError": "No pudimos conectarnos. Verificá tu conexión y que la API esté disponible."
   },
   "workRequests": {
     "title": "Solicitudes disponibles",
@@ -32,6 +34,83 @@
   "common": {
     "logout": "Cerrar sesión",
     "loading": "Cargando...",
-    "error": "Error"
+    "error": "Error",
+    "loadMore": "Cargar más",
+    "retry": "Reintentar",
+    "errorTitle": "Ocurrió un error",
+    "hello": "Hola, {{name}}",
+    "refresh": "Actualizar lista",
+    "back": "Volver"
+  },
+  "brand": {
+    "name": "lizto."
+  },
+  "navigation": {
+    "home": "Inicio",
+    "catalog": "Explorar",
+    "requests": "Solicitudes",
+    "account": "Mi cuenta"
+  },
+  "home": {
+    "eyebrow": "Tu próximo servicio empieza acá.",
+    "heroLabel": "MENOS VUELTAS. MÁS SOLUCIONES.",
+    "title": "Lo que necesitás,\nresuelto.",
+    "description": "Encontrá profesionales para tu casa, tu trabajo y tus proyectos. Empezá por lo que necesitás.",
+    "explore": "Explorar profesionales →",
+    "categories": "¿En qué te ayudamos?",
+    "categoriesHint": "Por categoría",
+    "requestsTitle": "Todo en un mismo lugar",
+    "requestsDescription": "Consultá el estado de tus solicitudes y retomá la conversación con tu profesional.",
+    "requestsAction": "Ver mis solicitudes"
+  },
+  "catalog": {
+    "title": "Encontrá tu profesional",
+    "description": "Explorá los perfiles disponibles en Lizto.",
+    "errorTitle": "No pudimos cargar el catálogo",
+    "errorDescription": "Revisá tu conexión e intentá de nuevo en unos minutos.",
+    "noCategories": "Todavía no hay categorías publicadas",
+    "browseCategory": "Explorar {{name}}",
+    "clearFilter": "Ver todas las categorías",
+    "emptyTitle": "Todavía no hay profesionales",
+    "emptyDescription": "Cuando haya perfiles disponibles, los vas a encontrar acá.",
+    "verified": "✓ Perfil verificado",
+    "reviews": "★ {{rating}} · {{count}} reseña",
+    "reviews_other": "★ {{rating}} · {{count}} reseñas",
+    "noReviews": "Todavía sin reseñas"
+  },
+  "account": {
+    "title": "Mi cuenta",
+    "description": "Tu perfil y tu sesión de Lizto.",
+    "signInTitle": "Tu espacio en Lizto",
+    "signInDescription": "Ingresá para consultar tus solicitudes y conversar con tus profesionales.",
+    "switchClient": "Cambiar a modo cliente",
+    "switchProvider": "Cambiar a modo profesional",
+    "actionError": "No pudimos completar la acción. Intentá nuevamente."
+  },
+  "requests": {
+    "title": "Mis solicitudes",
+    "description": "Seguí tus servicios y mantené las conversaciones a mano.",
+    "errorTitle": "No pudimos cargar tus solicitudes",
+    "emptyTitle": "Tus próximos proyectos, acá",
+    "emptyDescription": "Todavía no tenés solicitudes. Podés empezar explorando las categorías y los profesionales.",
+    "openChat": "Abrir conversación",
+    "status": {
+      "pending_survey": "Faltan detalles",
+      "pending_matching": "Buscando profesional",
+      "matching_active": "Búsqueda activa",
+      "provider_selected": "Profesional seleccionado",
+      "pending_provider": "Esperando al profesional",
+      "pending_confirmation": "Pendiente de confirmación",
+      "confirmed": "Confirmado",
+      "pending_diagnosis_quote": "Pendiente de presupuesto",
+      "in_progress": "En curso",
+      "pending_completion": "Pendiente de finalización",
+      "active": "Activo",
+      "completed": "Completado",
+      "cancelled": "Cancelado",
+      "expired": "Vencido",
+      "disputed": "En revisión",
+      "no_show": "Ausencia registrada"
+    }
   }
 }

@@ -10,7 +10,7 @@ export class ApiContractError extends Error {
 }
 
 export class HttpError extends Error {
-  constructor(public status: number, message: string, public body?: any) {
+  constructor(public status: number, message: string, public body?: unknown) {
     super(message);
     this.name = 'HttpError';
   }
@@ -34,7 +34,7 @@ export interface HttpRequestOptions extends RequestInit {
 
 export async function httpClient<T>(
   endpoint: string,
-  schema: z.ZodType<T, any, any>,
+  schema: z.ZodType<T, z.ZodTypeDef, unknown>,
   options: HttpRequestOptions = {}
 ): Promise<T> {
   const { requiresAuth = true, headers = {}, ...rest } = options;
@@ -80,8 +80,8 @@ export async function httpClient<T>(
   return parseResult.data;
 }
 
-httpClient.get = <T>(endpoint: string, schema: z.ZodType<T, any, any>, options: HttpRequestOptions = {}) =>
+httpClient.get = <T>(endpoint: string, schema: z.ZodType<T, z.ZodTypeDef, unknown>, options: HttpRequestOptions = {}) =>
   httpClient<T>(endpoint, schema, { ...options, method: 'GET' });
 
-httpClient.post = <T>(endpoint: string, schema: z.ZodType<T, any, any>, body?: any, options: HttpRequestOptions = {}) =>
+httpClient.post = <T>(endpoint: string, schema: z.ZodType<T, z.ZodTypeDef, unknown>, body?: unknown, options: HttpRequestOptions = {}) =>
   httpClient<T>(endpoint, schema, { ...options, method: 'POST', body: body ? JSON.stringify(body) : undefined });

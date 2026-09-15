@@ -22,16 +22,15 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     package: 'com.lizto.app',
     userInterfaceStyle: 'dark',
   },
-  web: {
-    bundler: 'metro',
-    output: 'static',
-    favicon: './assets/favicon.png',
-  },
   plugins: ['expo-router', 'expo-secure-store', 'expo-font', 'expo-splash-screen'],
   experiments: {
     typedRoutes: true,
   },
   extra: {
     apiUrl: process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8000/api/v1',
+    // eas init no puede escribir en un config dinamico: va a mano.
+    eas: {
+      projectId: '8db99c30-f415-49c2-bb9a-9c259dac63ae',
+    },
   },
 });

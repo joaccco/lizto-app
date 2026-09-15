@@ -1,18 +1,23 @@
 import React, { useState } from 'react';
-import { View, Pressable, ScrollView } from 'react-native';
+import { View, ScrollView } from 'react-native';
+import { useRouter } from 'expo-router';
+import { useQueryClient } from '@tanstack/react-query';
+import { ME_QUERY_KEY } from '@/features/auth/api/useMe';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslation } from 'react-i18next';
 import { loginSchema, LoginFormData } from '@/features/auth/schemas/authSchema';
 import { authApi } from '@/features/auth/api/authApi';
-import { useAuthStore, Role } from '@/features/auth/store/useAuthStore';
+import { useAuthStore } from '@/features/auth/store/useAuthStore';
 import { HttpError } from '@/core/api/httpClient';
 import { GlassCard, GlassButton, Input, Text } from '@/components/ui';
 
 export default function LoginScreen() {
   const { t } = useTranslation();
   const setSession = useAuthStore((state) => state.setSession);
-  const [selectedRole, setSelectedRole] = useState<Role>('provider');
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const deriveRole = useAuthStore(state => state.deriveActiveRoleFromUser);
   const [serverError, setServerError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -33,18 +38,15 @@ export default function LoginScreen() {
     setLoading(true);
     try {
       const response = await authApi.login(data);
-      const userRoles = response.data.user.roles;
-      
-      const roleToUse: Role = userRoles.includes('provider') && selectedRole === 'provider'
-        ? 'provider'
-        : 'client';
-
-      await setSession(response.data.token, roleToUse);
+      queryClient.clear();
+      const role = await deriveRole(response.data.user);
+      queryClient.setQueryData(ME_QUERY_KEY, response.data.user);
+      await setSession(response.data.token, role);
     } catch (err) {
       if (err instanceof HttpError) {
-        setServerError(err.body?.message || t('auth.invalidCredentials'));
+        setServerError(err.status === 401 || err.status === 422 ? t('auth.invalidCredentials') : t('auth.connectionError'));
       } else {
-        setServerError(t('auth.invalidCredentials'));
+        setServerError(t('auth.connectionError'));
       }
     } finally {
       setLoading(false);
@@ -71,44 +73,6 @@ export default function LoginScreen() {
       )}
 
       <GlassCard className="p-6">
-        {/* Selector de rol para la sesión */}
-        <View className="mb-5">
-          <Text variant="caption" weight="semibold" className="uppercase tracking-wider mb-2">
-            {t('auth.roleSelector')}
-          </Text>
-          <View className="flex-row bg-muted rounded-2xl p-1 border border-border">
-            <Pressable
-              onPress={() => setSelectedRole('provider')}
-              className={`flex-1 py-3 rounded-xl items-center ${
-                selectedRole === 'provider' ? 'bg-primary' : 'bg-transparent'
-              }`}
-            >
-              <Text
-                variant="body"
-                weight="bold"
-                className={selectedRole === 'provider' ? 'text-foreground' : 'text-muted-foreground'}
-              >
-                {t('auth.roleProvider')}
-              </Text>
-            </Pressable>
-
-            <Pressable
-              onPress={() => setSelectedRole('client')}
-              className={`flex-1 py-3 rounded-xl items-center ${
-                selectedRole === 'client' ? 'bg-primary' : 'bg-transparent'
-              }`}
-            >
-              <Text
-                variant="body"
-                weight="bold"
-                className={selectedRole === 'client' ? 'text-foreground' : 'text-muted-foreground'}
-              >
-                {t('auth.roleClient')}
-              </Text>
-            </Pressable>
-          </View>
-        </View>
-
         {/* Email Input */}
         <View className="mb-4">
           <Controller
@@ -161,6 +125,7 @@ export default function LoginScreen() {
           {t('auth.loginButton')}
         </GlassButton>
       </GlassCard>
+      <GlassButton variant="outline" className="mt-6 mb-12" onPress={() => router.replace('/(cliente)')}>{t('auth.browse')}</GlassButton>
     </ScrollView>
   );
 }
