@@ -1,9 +1,10 @@
 import { z } from 'zod';
+import { minorAmountSchema } from '@/core/domain/money';
+import { instantSchema } from '@/core/domain/time';
 
 export const confirmWorkRequestSchema = z.object({
-  proposed_price: z.number().positive('El precio debe ser un monto positivo').optional(),
-  scheduled_at: z.string().optional(),
-  estimated_duration_min: z.number().int().min(15, 'La duración mínima es de 15 minutos').optional(),
+  proposed_price: minorAmountSchema.positive().optional(),
+  scheduled_at: instantSchema.optional(),
+  estimated_duration_min: z.number().int().positive().optional(),
 });
-
 export type ConfirmWorkRequestPayload = z.infer<typeof confirmWorkRequestSchema>;

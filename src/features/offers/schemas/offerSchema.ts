@@ -1,115 +1,29 @@
 import { z } from 'zod';
+import { currencySchema, minorAmountSchema } from '@/core/domain/money';
+import { instantSchema } from '@/core/domain/time';
 
 export const pricingModeEnum = z.enum(['quoted', 'requires_visit']);
 export type PricingMode = z.infer<typeof pricingModeEnum>;
 
+// Todos los importes en la app están en centavos, incluido proposed_price.
 export const createOfferSchema = z.object({
-  pricing_mode: pricingModeEnum.default('quoted'),
-  proposed_price: z.number().nullable().optional(),
-  price_min: z.number().nullable().optional(),
-  price_max: z.number().nullable().optional(),
-  currency_code: z.string().default('ARS'),
-  proposed_start_at: z.string().nullable().optional(),
-  estimated_duration_min: z.number().min(15, 'La duración mínima es de 15 minutos').default(60),
-  notes: z.string().max(1000, 'Las notas no pueden superar los 1000 caracteres').optional(),
+  pricing_mode: pricingModeEnum,
+  proposed_price: minorAmountSchema.positive().nullable().optional(),
+  price_min: minorAmountSchema.nullable().optional(),
+  price_max: minorAmountSchema.nullable().optional(),
+  currency_code: currencySchema,
+  proposed_start_at: instantSchema.nullable().optional(),
+  estimated_duration_min: z.number().int().positive().optional(),
+  notes: z.string().max(1000).optional(),
 }).superRefine((data, ctx) => {
   if (data.pricing_mode === 'quoted') {
-    if (data.proposed_price === undefined || data.proposed_price === null || data.proposed_price <= 0) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['proposed_price'],
-        message: 'El precio propuesto es obligatorio para ofertas con monto fijo.',
-      });
-    }
-    if (data.price_min !== undefined && data.price_min !== null) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['price_min'],
-        message: 'No se permite especificar precio mínimo en modalidad quoted.',
-      });
-    }
-    if (data.price_max !== undefined && data.price_max !== null) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['price_max'],
-        message: 'No se permite especificar precio máximo en modalidad quoted.',
-      });
-    }
-  } else if (data.pricing_mode === 'requires_visit') {
-    if (data.proposed_price !== undefined && data.proposed_price !== null) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['proposed_price'],
-        message: 'No se permite especificar precio fijo en modalidad requires_visit.',
-      });
-    }
-    if (data.price_min === undefined || data.price_min === null || data.price_min < 0) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['price_min'],
-        message: 'El precio mínimo es obligatorio en modalidad requires_visit.',
-      });
-    }
-    if (data.price_max === undefined || data.price_max === null || data.price_max < 0) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['price_max'],
-        message: 'El precio máximo es obligatorio en modalidad requires_visit.',
-      });
-    }
-    if (data.price_min !== undefined && data.price_min !== null && data.price_max !== undefined && data.price_max !== null && data.price_min > data.price_max) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['price_max'],
-        message: 'El precio máximo del rango debe ser mayor o igual al mínimo.',
-      });
-    }
+    if (data.proposed_price == null) ctx.addIssue({ code: 'custom', path: ['proposed_price'], message: 'offers.invalidPrice' });
+    if (data.price_min != null || data.price_max != null) ctx.addIssue({ code: 'custom', path: ['price_min'], message: 'offers.invalidRange' });
+  } else {
+    if (data.proposed_price != null) ctx.addIssue({ code: 'custom', path: ['proposed_price'], message: 'offers.invalidPrice' });
+    if (data.price_min == null || data.price_max == null || data.price_min > data.price_max) ctx.addIssue({ code: 'custom', path: ['price_min'], message: 'offers.invalidRange' });
   }
 });
-
 export type CreateOfferFormData = z.infer<typeof createOfferSchema>;
-
-export const askQuestionSchema = z.object({
-  question_text: z.string().min(5, 'La pregunta debe tener al menos 5 caracteres'),
-});
-
+export const askQuestionSchema = z.object({ question_text: z.string().trim().min(1) });
 export type AskQuestionFormData = z.infer<typeof askQuestionSchema>;
-
-/**
- * Validador helper para comprobar si una hora propuesta (HH:mm o ISO) cae dentro de la ventana del cliente
- */
-export function isTimeWithinWindow(
-  proposedTimeOrIso: string | null | undefined,
-  windowStart: string | null | undefined,
-  windowEnd: string | null | undefined
-): boolean {
-  if (!proposedTimeOrIso || !windowStart || !windowEnd) return true;
-
-  try {
-    let hours = 0;
-    let minutes = 0;
-
-    if (proposedTimeOrIso.includes('T')) {
-      const timePart = proposedTimeOrIso.split('T')[1];
-      const [hStr, mStr] = timePart.split(':');
-      hours = parseInt(hStr, 10);
-      minutes = parseInt(mStr, 10);
-    } else {
-      const [hStr, mStr] = proposedTimeOrIso.split(':');
-      hours = parseInt(hStr, 10);
-      minutes = parseInt(mStr, 10);
-    }
-
-    const proposedTotalMinutes = hours * 60 + (minutes || 0);
-
-    const [startH, startM] = windowStart.split(':').map(Number);
-    const [endH, endM] = windowEnd.split(':').map(Number);
-
-    const startTotalMinutes = startH * 60 + (startM || 0);
-    const endTotalMinutes = endH * 60 + (endM || 0);
-
-    return proposedTotalMinutes >= startTotalMinutes && proposedTotalMinutes <= endTotalMinutes;
-  } catch {
-    return true;
-  }
-}

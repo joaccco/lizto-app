@@ -1,18 +1,8 @@
 import React from 'react';
-import { render, waitFor } from '@testing-library/react-native';
+import { act, render, waitFor } from '@testing-library/react-native';
 import { useAuthStore } from '@/features/auth/store/useAuthStore';
 
 jest.mock('react-native-safe-area-context', () => require('react-native-safe-area-context/jest/mock').default);
-
-// Mock app/_layout useAppFonts
-jest.mock('../app/_layout', () => {
-  const actual = jest.requireActual('../app/_layout');
-  return {
-    __esModule: true,
-    ...actual,
-    useAppFonts: () => global.__mockFontsState || [true, null],
-  };
-});
 
 // Mock expo-splash-screen
 jest.mock('expo-splash-screen', () => ({
@@ -29,7 +19,7 @@ jest.mock('expo-router', () => ({
       const { View } = require('react-native');
       return <View testID="root-stack">{children}</View>;
     },
-    { Screen: () => null }
+    { Protected: ({ guard, children }: { guard: boolean; children: React.ReactNode }) => guard ? children : null, Screen: () => null }
   ),
 }));
 
@@ -42,13 +32,14 @@ declare global {
 describe('Carga de fuentes en Layout Raíz (RootLayout)', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    useAuthStore.setState({ isInitialized: true, token: null, activeRole: null });
+    useAuthStore.setState({ isInitialized: false, token: null, activeRole: null, storageError: null });
   });
 
   test('NO renderiza los hijos mientras las fuentes están pendientes ([false, null])', async () => {
     global.__mockFontsState = [false, null];
 
-    const { queryByTestId } = await render(<RootLayout />);
+    const { queryByTestId } = render(<RootLayout />);
+    await act(async () => { await useAuthStore.getState().initializeSession(); });
     // El árbol debe ser nulo mientras las fuentes no estén listas y no haya error
     expect(queryByTestId('root-stack')).toBeNull();
   });

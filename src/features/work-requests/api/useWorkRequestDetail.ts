@@ -7,13 +7,17 @@ const getWorkRequestDetailResponseSchema = z.object({
   data: workRequestDetailSchema,
 });
 
+export const workRequestDetailKey = (uuid: string) => ['work-requests', uuid] as const;
+
 export function useWorkRequestDetail(uuid: string) {
   return useQuery<WorkRequestDetail>({
-    queryKey: ['work-requests', uuid],
-    queryFn: async () => {
+    queryKey: workRequestDetailKey(uuid),
+    queryFn: async ({ signal }) => {
+      z.string().uuid().parse(uuid);
       const response = await httpClient.get(
-        `/v1/requests/${uuid}`,
-        getWorkRequestDetailResponseSchema
+        `/requests/${uuid}`,
+        getWorkRequestDetailResponseSchema,
+        { signal }
       );
       return response.data;
     },

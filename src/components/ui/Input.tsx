@@ -30,12 +30,12 @@ export const Input: React.FC<InputProps> = ({
 }) => {
   const [isFocused, setIsFocused] = useState(false);
 
-  const handleFocus = (e: any) => {
+  const handleFocus: NonNullable<RNTextInputProps['onFocus']> = (e) => {
     setIsFocused(true);
     if (onFocus) onFocus(e);
   };
 
-  const handleBlur = (e: any) => {
+  const handleBlur: NonNullable<RNTextInputProps['onBlur']> = (e) => {
     setIsFocused(false);
     if (onBlur) onBlur(e);
   };
@@ -59,6 +59,7 @@ export const Input: React.FC<InputProps> = ({
         {leftIcon ? <View className="mr-3">{leftIcon}</View> : null}
         <RNTextInput
           className={`flex-1 text-foreground font-sans text-sm p-0 ${className}`.trim()}
+          accessibilityLabel={label}
           placeholderTextColor={placeholderTextColor}
           onFocus={handleFocus}
           onBlur={handleBlur}

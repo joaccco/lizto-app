@@ -1,15 +1,14 @@
-import React, { useState } from 'react';
-import { View, ScrollView } from 'react-native';
+import React, { useRef, useState } from 'react';
+import { View, ScrollView, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
-import { ME_QUERY_KEY } from '@/features/auth/api/useMe';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslation } from 'react-i18next';
 import { loginSchema, LoginFormData } from '@/features/auth/schemas/authSchema';
 import { authApi } from '@/features/auth/api/authApi';
 import { useAuthStore } from '@/features/auth/store/useAuthStore';
-import { HttpError } from '@/core/api/httpClient';
+import { loginError } from '@/features/auth/domain/loginError';
 import { GlassCard, GlassButton, Input, Text } from '@/components/ui';
 
 export default function LoginScreen() {
@@ -17,13 +16,15 @@ export default function LoginScreen() {
   const setSession = useAuthStore((state) => state.setSession);
   const router = useRouter();
   const queryClient = useQueryClient();
-  const deriveRole = useAuthStore(state => state.deriveActiveRoleFromUser);
   const [serverError, setServerError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const submitting = useRef(false);
 
   const {
     control,
     handleSubmit,
+    setError,
+    clearErrors,
     formState: { errors },
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -34,27 +35,28 @@ export default function LoginScreen() {
   });
 
   const onSubmit = async (data: LoginFormData) => {
+    if (submitting.current) return;
+    if (Platform.OS === 'web') { setServerError(t('auth.nativeLoginRequired')); return; }
+    submitting.current = true;
+    clearErrors();
     setServerError(null);
     setLoading(true);
     try {
       const response = await authApi.login(data);
       queryClient.clear();
-      const role = await deriveRole(response.data.user);
-      queryClient.setQueryData(ME_QUERY_KEY, response.data.user);
-      await setSession(response.data.token, role);
+      await setSession(response.data.token);
     } catch (err) {
-      if (err instanceof HttpError) {
-        setServerError(err.status === 401 || err.status === 422 ? t('auth.invalidCredentials') : t('auth.connectionError'));
-      } else {
-        setServerError(t('auth.connectionError'));
-      }
+      const failure = loginError(err);
+      setServerError(t(failure.message));
+      for (const field of failure.fields) setError(field, { type: 'server', message: failure.message });
     } finally {
+      submitting.current = false;
       setLoading(false);
     }
   };
 
   return (
-    <ScrollView className="flex-1 bg-background px-6 py-12">
+    <ScrollView className="flex-1 bg-background px-6 py-12" keyboardShouldPersistTaps="handled">
       <View className="mt-8 mb-8">
         <Text variant="h1" className="mb-2">
           {t('auth.title')}
@@ -66,7 +68,7 @@ export default function LoginScreen() {
 
       {serverError && (
         <View className="bg-danger/15 border border-danger/30 rounded-2xl p-4 mb-6">
-          <Text variant="caption" className="text-danger">
+          <Text variant="caption" className="text-danger" accessibilityRole="alert">
             {serverError}
           </Text>
         </View>
@@ -87,7 +89,7 @@ export default function LoginScreen() {
                 onBlur={onBlur}
                 onChangeText={onChange}
                 value={value}
-                error={errors.email?.message}
+                error={errors.email?.message ? t(errors.email.message) : undefined}
                 testID="login-email-input"
               />
             )}
@@ -107,7 +109,7 @@ export default function LoginScreen() {
                 onBlur={onBlur}
                 onChangeText={onChange}
                 value={value}
-                error={errors.password?.message}
+                error={errors.password?.message ? t(errors.password.message) : undefined}
                 testID="login-password-input"
               />
             )}

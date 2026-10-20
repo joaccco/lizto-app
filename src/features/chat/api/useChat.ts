@@ -9,7 +9,7 @@ import { ConversationDetail, SendMessageData } from '../schemas/chatSchema';
 export function useConversation(uuid: string) {
   return useQuery<ConversationDetail>({
     queryKey: ['chat', uuid],
-    queryFn: () => chatApi.getConversation(uuid),
+    queryFn: ({ signal }) => chatApi.getConversation(uuid, signal),
     enabled: Boolean(uuid),
     refetchInterval: 3000,
     refetchIntervalInBackground: false,

@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { View } from 'react-native';
+import { useTranslation } from 'react-i18next';
+import { askQuestionSchema } from '../schemas/offerSchema';
 import { GlassSheet, GlassButton, Input, Text } from '@/components/ui';
 
 interface QuestionSheetProps {
@@ -15,12 +17,13 @@ export const QuestionSheet: React.FC<QuestionSheetProps> = ({
   onSubmit,
   loading = false,
 }) => {
+  const { t } = useTranslation();
   const [questionText, setQuestionText] = useState('');
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async () => {
-    if (!questionText.trim() || questionText.trim().length < 5) {
-      setError('La pregunta debe contener al menos 5 caracteres.');
+    if (!askQuestionSchema.safeParse({ question_text: questionText }).success) {
+      setError(t('questions.required'));
       return;
     }
 
@@ -29,18 +32,18 @@ export const QuestionSheet: React.FC<QuestionSheetProps> = ({
       await onSubmit(questionText.trim());
       setQuestionText('');
       onClose();
-    } catch (err: any) {
-      setError(err?.message || 'Error al enviar la pregunta. Reintente.');
+    } catch {
+      setError(t('questions.sendError'));
     }
   };
 
   return (
     <GlassSheet visible={visible} onClose={onClose}>
       <Text variant="h2" weight="bold" className="mb-2">
-        Hacer una Pregunta
+        {t('questions.title')}
       </Text>
       <Text variant="caption" muted className="mb-4">
-        Consultá detalles sobre el trabajo antes de enviar tu oferta formal.
+        {t('questions.description')}
       </Text>
 
       {error ? (
@@ -52,8 +55,8 @@ export const QuestionSheet: React.FC<QuestionSheetProps> = ({
       ) : null}
 
       <Input
-        label="Tu pregunta para el cliente"
-        placeholder="Ej: ¿El lugar cuenta con acceso para estacionar o escalera?"
+        label={t('questions.label')}
+        placeholder={t('questions.placeholder')}
         value={questionText}
         onChangeText={setQuestionText}
         multiline
@@ -71,7 +74,7 @@ export const QuestionSheet: React.FC<QuestionSheetProps> = ({
         disabled={loading}
         testID="send-question-button"
       >
-        Enviar Pregunta
+        {t('questions.submit')}
       </GlassButton>
     </GlassSheet>
   );

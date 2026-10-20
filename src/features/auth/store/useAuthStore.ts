@@ -1,6 +1,5 @@
 import { create } from 'zustand';
-import { saveToken, removeToken, saveActiveRole, getActiveRole, getToken } from '@/core/security/secureStore';
-import { User } from '../schemas/authSchema';
+import { saveToken, removeToken, getToken } from '@/core/security/secureStore';
 
 export type Role = 'provider' | 'client';
 
@@ -8,69 +7,42 @@ interface AuthState {
   token: string | null;
   activeRole: Role | null;
   isInitialized: boolean;
-  setSession: (token: string, initialRole?: Role) => Promise<void>;
-  deriveActiveRoleFromUser: (user: User) => Promise<Role>;
-  setActiveRole: (role: Role) => Promise<void>;
+  storageError: 'read' | 'delete' | null;
+  setSession: (token: string) => Promise<void>;
   logout: () => Promise<void>;
   initializeSession: () => Promise<void>;
 }
 
-export const useAuthStore = create<AuthState>((set, get) => ({
+export const useAuthStore = create<AuthState>((set) => ({
   token: null,
   activeRole: null,
   isInitialized: false,
-
+  storageError: null,
   initializeSession: async () => {
-    const token = await getToken();
-    const storedRole = await getActiveRole();
-    const activeRole: Role | null = storedRole === 'client' || storedRole === 'provider' ? storedRole : null;
-
-    set({
-      token,
-      activeRole,
-      isInitialized: true,
-    });
-  },
-
-  deriveActiveRoleFromUser: async (user: User): Promise<Role> => {
-    const roles = user.roles;
-    const hasProvider = roles.includes('provider');
-    const hasClient = roles.includes('client');
-    const storedRole = await getActiveRole();
-
-    let targetRole: Role;
-    if (hasProvider && !hasClient) {
-      targetRole = 'provider';
-    } else if (hasClient && !hasProvider) {
-      targetRole = 'client';
-    } else if (hasProvider && hasClient) {
-      targetRole = storedRole && (storedRole === 'provider' || storedRole === 'client') ? storedRole : 'provider';
-    } else {
-      targetRole = 'client';
-    }
-
-    await saveActiveRole(targetRole);
-    set({ activeRole: targetRole });
-    return targetRole;
-  },
-
-  setSession: async (token: string, initialRole?: Role) => {
-    await saveToken(token);
-    if (initialRole) {
-      await saveActiveRole(initialRole);
-      set({ token, activeRole: initialRole });
-    } else {
-      set({ token });
+    try {
+      const token = await getToken();
+      set({ token, activeRole: null, isInitialized: true, storageError: null });
+    } catch {
+      set({ token: null, activeRole: null, isInitialized: true, storageError: 'read' });
     }
   },
-
-  setActiveRole: async (role: Role) => {
-    await saveActiveRole(role);
-    set({ activeRole: role });
+  setSession: async (token) => {
+    try {
+      await saveToken(token);
+      set({ token, activeRole: null, storageError: null });
+    } catch (error) {
+      try { await removeToken(); }
+      catch { set({ storageError: 'delete' }); }
+      throw error;
+    }
   },
-
   logout: async () => {
-    await removeToken();
-    set({ token: null, activeRole: null });
+    try {
+      await removeToken();
+      set({ token: null, activeRole: null, storageError: null });
+    } catch (error) {
+      set({ activeRole: null, storageError: 'delete' });
+      throw error;
+    }
   },
 }));

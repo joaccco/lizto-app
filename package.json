@@ -12,7 +12,8 @@
     "dev": "expo start --web --port 8081",
     "dev:native": "expo start --dev-client",
     "doctor": "npx expo-doctor",
-    "export:web": "expo export --platform web"
+    "export:web": "expo export --platform web",
+    "test:api": "jest --config jest.api.config.cjs --runInBand"
   },
   "dependencies": {
     "@expo-google-fonts/ibm-plex-mono": "^0.4.1",
@@ -21,24 +22,26 @@
     "@tanstack/react-query": "^5.62.0",
     "date-fns": "^4.1.0",
     "date-fns-tz": "^3.2.0",
-    "expo": "~57.0.15",
+    "expo": "~57.0.30",
     "expo-asset": "^57.0.13",
-    "expo-blur": "~57.0.2",
+    "expo-blur": "~57.0.3",
+    "expo-build-properties": "~57.0.22",
     "expo-constants": "~57.0.13",
+    "expo-dev-client": "~57.0.20",
     "expo-font": "~57.0.1",
-    "expo-linear-gradient": "~57.0.1",
-    "expo-linking": "~57.0.7",
-    "expo-router": "~57.0.15",
-    "expo-secure-store": "~57.0.1",
-    "expo-splash-screen": "~57.0.7",
+    "expo-linear-gradient": "~57.0.2",
+    "expo-linking": "~57.0.13",
+    "expo-router": "~57.0.28",
+    "expo-secure-store": "~57.0.4",
+    "expo-splash-screen": "~57.0.10",
     "expo-status-bar": "~57.0.1",
-    "i18next": "^24.2.0",
+    "i18next": "^26.4.2",
     "nativewind": "^4.1.23",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-hook-form": "^7.54.1",
-    "react-i18next": "^15.4.0",
-    "react-native": "0.86.2",
+    "react-i18next": "^17.0.16",
+    "react-native": "0.86.3",
     "react-native-reanimated": "4.5.1",
     "react-native-safe-area-context": "~5.7.0",
     "react-native-screens": "~4.26.0",
@@ -50,18 +53,21 @@
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
-    "@react-native/jest-preset": "^0.86.2",
+    "@react-native/jest-preset": "^0.86.3",
     "@testing-library/react-native": "^13.3.3",
     "@types/jest": "^29.5.14",
     "@types/react": "~19.2.4",
     "jest": "^29.7.0",
-    "jest-expo": "^57.0.4",
+    "jest-expo": "~57.0.6",
     "postcss": "^8.4.49",
     "react-test-renderer": "^19.2.3",
-    "typescript": "~5.9.3"
+    "typescript": "~6.0.3"
   },
   "overrides": {
     "lightningcss": "1.27.0"
   },
-  "private": true
+  "private": true,
+  "engines": {
+    "node": "^20.19.4 || ^22.13.0 || ^24.3.0 || >=25.0.0"
+  }
 }

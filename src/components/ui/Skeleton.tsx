@@ -1,8 +1,8 @@
 import React, { useEffect, useRef } from 'react';
-import { Animated, ViewProps } from 'react-native';
+import { Animated, ViewProps, DimensionValue } from 'react-native';
 
 export interface SkeletonProps extends ViewProps {
-  width?: number | string;
+  width?: DimensionValue;
   height?: number;
   borderRadius?: number;
   className?: string;
@@ -43,8 +43,8 @@ export const Skeleton: React.FC<SkeletonProps> = ({
       className={`bg-muted/80 overflow-hidden ${className}`.trim()}
       style={[
         {
-          width: width as any,
-          height: height as any,
+          width,
+          height,
           borderRadius,
           opacity,
         },

@@ -7,10 +7,11 @@ export const WORK_REQUESTS_QUERY_KEY = ['provider', 'work-requests'];
 export function useWorkRequests() {
   return useQuery<WorkRequestItem[], Error>({
     queryKey: WORK_REQUESTS_QUERY_KEY,
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       const response = await httpClient('/provider/work-requests', workRequestsResponseSchema, {
         method: 'GET',
         requiresAuth: true,
+        signal,
       });
       return response.data;
     },

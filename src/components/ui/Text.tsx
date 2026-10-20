@@ -74,7 +74,7 @@ export const Text: React.FC<TextProps> = ({
   return (
     <RNText
       className={combinedClassName}
-      style={[{ color: color || undefined }, style]}
+      style={color ? [{ color }, style] : style}
       {...props}
     >
       {children}

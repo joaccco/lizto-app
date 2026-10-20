@@ -1,3 +1,4 @@
+import { sessionRedirect } from '@/core/navigation/sessionRoute';
 import { ApiContractError } from '../src/core/api/httpClient';
 import { userSchema } from '../src/features/auth/schemas/authSchema';
 import { confirmWorkRequestSchema } from '../src/features/offers/schemas/confirmRequestSchema';
@@ -22,21 +23,12 @@ describe('Criterios de Aceptación: Validación de Contratos y Control de Rutas'
   });
 
   test('6. Un usuario sin rol de profesional no puede alcanzar las rutas del grupo profesional', () => {
-    const clientUser = {
-      id: 'uuid-456',
-      name: 'Maria Gomez',
-      email: 'maria@test.com',
-      status: 'active',
-      roles: ['client'],
-      has_provider_profile: false,
-    };
-
-    const hasProviderRole = clientUser.roles.includes('provider');
-    expect(hasProviderRole).toBe(false);
+    expect(sessionRedirect({ token: 'session', role: 'client', group: '(pro)' })).toBe('/(cliente)');
   });
 
   test('7. confirmWorkRequestSchema valida payload tipado y descarta el campo notes', () => {
     const payload = {
+      notes: 'No permitido en este contrato',
       proposed_price: 15000,
       scheduled_at: '2026-08-25T10:00:00.000Z',
       estimated_duration_min: 60,
@@ -46,7 +38,7 @@ describe('Criterios de Aceptación: Validación de Contratos y Control de Rutas'
     expect(parseResult.success).toBe(true);
     if (parseResult.success) {
       expect(parseResult.data.proposed_price).toBe(15000);
-      expect((parseResult.data as any).notes).toBeUndefined();
+      expect(parseResult.data).not.toHaveProperty('notes');
     }
   });
 });

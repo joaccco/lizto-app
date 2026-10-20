@@ -1,66 +1,52 @@
-import { formatInTimeZone } from 'date-fns-tz';
+import { formatInTimeZone, fromZonedTime } from 'date-fns-tz';
 import { parseISO } from 'date-fns';
+import { z } from 'zod';
+import i18n from '@/core/i18n';
 
 export const TARGET_TIMEZONE = 'America/Argentina/Buenos_Aires';
+export const instantSchema = z.string().datetime({ offset: true });
+export const localDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine(value => {
+  const date = new Date(`${value}T00:00:00Z`);
+  return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
+});
+// Laravel TIME serializa HH:mm o HH:mm:ss; solo se permiten segundos cero.
+export const localTimeSchema = z.string().regex(/^(?:[01]\d|2[0-3]):[0-5]\d(?::00)?$/);
 
-/**
- * Invariante ADR-010: Todo instante es absoluto y lleva offset/zona horaria explícita.
- * Prohibido comparar u ordenar cadenas de hora local.
- */
-
-export function ensureExplicitTimezoneISO(isoString: string): string {
-  if (!isoString) return new Date().toISOString();
-  
-  // Si no especifica offset Z ni +/-HH:MM, se considera inválido según ADR-010
-  const hasOffset = /Z|[+-]\d{2}:\d{2}$/.test(isoString);
-  if (!hasOffset) {
-    throw new Error(`TIME_ERROR: Instante sin zona horaria ni offset explícito: "${isoString}"`);
-  }
-  return isoString;
+export function ensureExplicitTimezoneISO(value: string): string {
+  const result = instantSchema.safeParse(value);
+  if (!result.success) throw new Error('TIME_ERROR: Instante sin zona horaria explícita o inválido.');
+  return result.data;
 }
 
-/**
- * Compara dos instantes absolutos retornando -1, 0, 1.
- * Garantiza comparación por milisegundos Unix epoch, no por cadenas locales.
- */
+export function argentinaLocalToInstant(date: string, time: string): string {
+  localDateSchema.parse(date);
+  localTimeSchema.parse(time);
+  return fromZonedTime(`${date}T${time.slice(0, 5)}:00`, TARGET_TIMEZONE).toISOString();
+}
+
 export function compareInstants(isoA: string, isoB: string): number {
-  ensureExplicitTimezoneISO(isoA);
-  ensureExplicitTimezoneISO(isoB);
-  
-  const timeA = Date.parse(isoA);
-  const timeB = Date.parse(isoB);
-
-  if (isNaN(timeA) || isNaN(timeB)) {
-    throw new Error('TIME_ERROR: Instante inválido para comparación');
-  }
-
-  if (timeA < timeB) return -1;
-  if (timeA > timeB) return 1;
-  return 0;
+  const a = Date.parse(ensureExplicitTimezoneISO(isoA));
+  const b = Date.parse(ensureExplicitTimezoneISO(isoB));
+  return a === b ? 0 : a < b ? -1 : 1;
 }
 
-/**
- * Formatea un instante ISO a la zona horaria de Buenos Aires para presentación visual.
- */
+export function isInstantWithinWindow(instant: string, date: string, start: string, end: string): boolean {
+  const from = argentinaLocalToInstant(date, start);
+  const to = argentinaLocalToInstant(date, end);
+  // Sin un día de fin en el contrato, no se adivinan ventanas que crucen medianoche.
+  if (compareInstants(from, to) > 0) return false;
+  return compareInstants(instant, from) >= 0 && compareInstants(instant, to) <= 0;
+}
+
 export function formatToArgentinaTime(isoString: string, formatStr: string = 'dd/MM/yyyy HH:mm'): string {
-  ensureExplicitTimezoneISO(isoString);
-  const date = parseISO(isoString);
-  return formatInTimeZone(date, TARGET_TIMEZONE, formatStr);
+  return formatInTimeZone(parseISO(ensureExplicitTimezoneISO(isoString)), TARGET_TIMEZONE, formatStr);
 }
 
-/**
- * Retorna tiempo relativo transcurrido (ej. "Hace 15 min") para presentación.
- */
 export function formatTimeAgo(isoString: string): string {
-  ensureExplicitTimezoneISO(isoString);
-  const now = Date.now();
-  const past = Date.parse(isoString);
-  const diffMinutes = Math.floor((now - past) / (1000 * 60));
-
-  if (diffMinutes < 1) return 'Recién publicado';
-  if (diffMinutes < 60) return `Hace ${diffMinutes} min`;
-  const diffHours = Math.floor(diffMinutes / 60);
-  if (diffHours < 24) return `Hace ${diffHours} h`;
-  const diffDays = Math.floor(diffHours / 24);
-  return `Hace ${diffDays} d`;
+  const diffMinutes = Math.floor((Date.now() - Date.parse(ensureExplicitTimezoneISO(isoString))) / 60000);
+  if (diffMinutes < 1) return i18n.t('time.justNow');
+  if (diffMinutes < 60) return i18n.t('time.minutes', { count: diffMinutes });
+  const hours = Math.floor(diffMinutes / 60);
+  if (hours < 24) return i18n.t('time.hours', { count: hours });
+  return i18n.t('time.days', { count: Math.floor(hours / 24) });
 }

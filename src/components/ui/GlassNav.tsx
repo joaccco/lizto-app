@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, ViewProps, StyleSheet, Platform } from 'react-native';
 import { BlurView } from 'expo-blur';
+import { Text } from './Text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export interface GlassNavProps extends ViewProps {
@@ -32,7 +33,7 @@ export const GlassNav: React.FC<GlassNavProps> = ({
       <View className="flex-1 items-center px-2">
         {title ? (
           <View className="items-center">
-            {children || <View />}
+            {children || <Text variant="h2" weight="bold">{title}</Text>}
           </View>
         ) : (
           children

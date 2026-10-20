@@ -28,8 +28,9 @@ export const authApi = {
     });
   },
 
-  getMe: async (): Promise<User> => {
+  getMe: async (signal?: AbortSignal): Promise<User> => {
     const res = await httpClient<{ data: User }>('/auth/me', meResponseSchema, {
+      signal,
       method: 'GET',
       requiresAuth: true,
     });
@@ -40,8 +41,6 @@ export const authApi = {
     await httpClient<{ message: string }>('/auth/logout', z.object({ message: z.string() }), {
       method: 'POST',
       requiresAuth: true,
-    }).catch(() => {
-      // Si la API falla o 401, el token ya fue borrado localmente
     });
   },
 };

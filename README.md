@@ -2,6 +2,10 @@
 
 App React Native + Expo para clientes y profesionales. Diseño oscuro con Manrope, IBM Plex Mono, violeta y verde lima. El avance y la comparación con web están en [docs/MOBILE_ROADMAP.md](docs/MOBILE_ROADMAP.md).
 
+Para retomar las próximas implementaciones y sus motivos, leer [el roadmap compartido](docs/ROADMAP-IMPLEMENTACIONES.md), que reúne el contexto de la auditoría, Trello y `lizto-engineering`.
+
+La [primera etapa: alcance y contratos](docs/ETAPA-1-ALCANCE-Y-CONTRATOS.md) registra los endpoints actuales, desajustes y requerimientos para coordinar con backend.
+
 ## Ver el frontend en tu Mac
 
 Desde una terminal:
@@ -16,13 +20,13 @@ Abrí http://localhost:8081. Es la app móvil renderizada en el navegador median
 
 Si 8081 está ocupado, detené la instancia anterior con Ctrl+C o usá `npm run web -- --port 8082`.
 
-Inicio y catálogo son públicos. Solicitudes y cuenta requieren una sesión real para consultar datos privados. En web la sesión es temporal en memoria: al recargar hay que volver a ingresar. En iOS/Android se usa Secure Store.
+Inicio y catálogo son públicos. Solicitudes y cuenta requieren una sesión real para consultar datos privados. El navegador permite explorar el catálogo; el inicio de sesión requiere Android/iOS porque las credenciales se guardan exclusivamente en Secure Store. Un error de almacenamiento se informa y bloquea la sesión hasta resolverse.
 
 ## Conectar la API
 
 El frontend necesita Laravel para mostrar categorías, perfiles y solicitudes. Si no está disponible se muestra un error con reintento; no se inventan datos.
 
-El archivo local `.env.local` puede contener:
+La URL de API es obligatoria. El archivo local `.env.local` puede contener:
 
 ```dotenv
 EXPO_PUBLIC_API_URL=http://localhost:8000/api/v1
@@ -49,7 +53,7 @@ npm run ios       # Compila y abre un simulador con Xcode/CocoaPods disponibles
 npm run android   # Requiere Android SDK, JDK y emulador o dispositivo
 ```
 
-`npm start` inicia Metro. Para un cliente de desarrollo personalizado ya instalado, `npm run dev:native` inicia Metro con `--dev-client`. El paquete expo-dev-client no se añadió en esta entrega; incorporarlo antes de preparar ese tipo de cliente. Expo Go no es el entorno de referencia.
+`npm start` inicia Metro. Para un cliente de desarrollo personalizado ya instalado, `npm run dev:native` inicia Metro con `--dev-client`. El paquete `expo-dev-client` está incorporado para ese cliente. Expo Go no es el entorno de referencia.
 
 La vista de navegador permite trabajar en navegación y diseño, pero no verifica permisos, almacenamiento nativo, notificaciones ni apariencia exacta de blur/tipografía en dispositivo.
 
@@ -62,6 +66,16 @@ npm run doctor
 npm run export:web
 ```
 
-Usar una versión de Node admitida por React Native 0.86: `^20.19.4`, `^22.13.0`, `^24.3.0` o `>=25`. La instalación local encontrada es Node 23.6.0 y produce avisos de compatibilidad, aunque el servidor web inició.
+Usar una versión de Node admitida por React Native 0.86: `^20.19.4`, `^22.13.0`, `^24.3.0` o `>=25`. La versión mínima también se declara en package.json; un Node anterior puede fallar al compilar o instalar. El archivo `.nvmrc` fija Node 22.23.3 para este proyecto (`nvm install` y `nvm use` si utilizás nvm). En este equipo se instaló esa versión mediante Homebrew y se activó como `node` predeterminado.
 
 Referencia oficial: https://docs.expo.dev/workflow/web/
+
+Pruebas opcionales contra una API local real (crean cuentas de prueba mediante registro):
+
+```sh
+LIZTO_LIVE_API_URL=http://127.0.0.1:8000/api/v1 npm run test:api
+```
+
+La suite sólo admite loopback y mantiene los tokens en memoria. No reemplaza la comprobación nativa de Secure Store, navegación ni ejecución en Android/iPhone.
+
+Con Xcode 27 / iOS 27, `expo-build-properties` activa `ios.enableSceneSupport` en `app.config.ts`. Es necesario para que UIKit permita arrancar la app; después de modificar plugins hay que regenerar y recompilar el proyecto iOS. No basta recargar Metro.

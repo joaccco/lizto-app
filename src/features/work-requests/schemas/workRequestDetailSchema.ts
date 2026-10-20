@@ -1,23 +1,20 @@
 import { z } from 'zod';
+import { instantSchema, localDateSchema, localTimeSchema } from '@/core/domain/time';
+import { locationFields, redactUnconfirmedLocation } from './locationSchema';
 
 export const workRequestDetailSchema = z.object({
-  id: z.string(),
-  uuid: z.string(),
+  id: z.string().uuid(),
+  uuid: z.string().uuid(),
   raw_prompt: z.string(),
   status: z.string(),
   urgency: z.string(),
   formatted_schedule: z.string().nullable().optional(),
-  scheduled_date: z.string().nullable().optional(),
-  window_start: z.string().nullable().optional(),
-  window_end: z.string().nullable().optional(),
-  address: z.string().nullable().optional(),
-  location_address: z.string().nullable().optional(),
-  location_lat: z.number().nullable().optional(),
-  location_lng: z.number().nullable().optional(),
-  is_approximate: z.boolean().optional(),
-  location_radius_meters: z.number().nullable().optional(),
-  created_at: z.string(),
-  conversation_id: z.string().nullable().optional(),
+  scheduled_date: localDateSchema.nullable().optional(),
+  window_start: localTimeSchema.nullable().optional(),
+  window_end: localTimeSchema.nullable().optional(),
+  ...locationFields,
+  created_at: instantSchema,
+  conversation_id: z.string().uuid().nullable().optional(),
   category: z
     .object({
       name: z.string(),
@@ -27,17 +24,17 @@ export const workRequestDetailSchema = z.object({
     .optional(),
   accepted_provider: z
     .object({
-      id: z.string(),
+      id: z.string().uuid(),
       name: z.string(),
       avatar_url: z.string().nullable().optional(),
-      avg_rating: z.number().optional(),
+      avg_rating: z.number().nullable().optional(),
     })
     .nullable()
     .optional(),
   brief: z
     .object({
       summary: z.string().optional(),
-      attributes: z.record(z.string(), z.any()).optional(),
+      attributes: z.record(z.string(), z.unknown()).optional(),
     })
     .nullable()
     .optional(),
@@ -49,6 +46,6 @@ export const workRequestDetailSchema = z.object({
       })
     )
     .optional(),
-});
+}).transform(redactUnconfirmedLocation);
 
 export type WorkRequestDetail = z.infer<typeof workRequestDetailSchema>;

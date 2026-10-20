@@ -1,27 +1,31 @@
 import { z } from 'zod';
+import { instantSchema } from '@/core/domain/time';
 
 export const loginSchema = z.object({
-  email: z.string().email('Ingresá un correo electrónico válido'),
-  password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres'),
+  email: z.string().trim().email('validation.email'),
+  password: z.string().min(1, 'validation.passwordLogin'),
 });
 
 export type LoginFormData = z.infer<typeof loginSchema>;
 
 export const registerSchema = z.object({
-  name: z.string().min(2, 'El nombre debe tener al menos 2 caracteres'),
-  email: z.string().email('Ingresá un correo electrónico válido'),
-  password: z.string().min(8, 'La contraseña debe tener al menos 8 caracteres'),
-  password_confirmation: z.string().min(8, 'La confirmación de contraseña debe tener al menos 8 caracteres'),
-  phone: z.string().optional(),
+  name: z.string().trim().min(1, 'validation.name')
+    .refine(value => [...value].length <= 255, 'validation.nameMax'),
+  email: z.string().trim().email('validation.email'),
+  password: z.string().min(8, 'validation.passwordRegister')
+    .regex(/[A-Z]/, 'validation.passwordUppercase')
+    .regex(/[0-9]/, 'validation.passwordNumber'),
+  password_confirmation: z.string().min(8, 'validation.passwordConfirmation'),
+  phone: z.string().refine(value => [...value].length <= 50, 'validation.phoneMax').nullable().optional(),
 }).refine((data) => data.password === data.password_confirmation, {
-  message: 'Las contraseñas no coinciden',
+  message: 'validation.passwordMismatch',
   path: ['password_confirmation'],
 });
 
 export type RegisterFormData = z.infer<typeof registerSchema>;
 
 export const userSchema = z.object({
-  id: z.string(),
+  id: z.string().uuid(),
   name: z.string(),
   email: z.string().email(),
   phone: z.string().nullable().optional(),
@@ -29,7 +33,7 @@ export const userSchema = z.object({
   status: z.string(),
   roles: z.array(z.string()),
   has_provider_profile: z.boolean(),
-  created_at: z.string().nullable().optional(),
+  created_at: instantSchema.nullable().optional(),
 });
 
 export type User = z.infer<typeof userSchema>;

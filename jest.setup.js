@@ -36,3 +36,20 @@ jest.mock('expo-constants', () => ({
     },
   },
 }));
+
+// Las cachés de prueba se liberan al desmontar; no esperamos el GC de cinco minutos de producción.
+jest.mock('@tanstack/react-query', () => {
+  const actual = jest.requireActual('@tanstack/react-query');
+  return {
+    ...actual,
+    QueryClient: class extends actual.QueryClient {
+      constructor(options = {}) {
+        super({ ...options, defaultOptions: {
+          ...options.defaultOptions,
+          queries: { gcTime: 0, ...options.defaultOptions?.queries },
+          mutations: { gcTime: 0, ...options.defaultOptions?.mutations },
+        } });
+      }
+    },
+  };
+});

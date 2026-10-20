@@ -9,11 +9,20 @@
     "loginButton": "Ingresar",
     "loggingIn": "Iniciando sesión...",
     "invalidCredentials": "Las credenciales no son correctas.",
+    "accountRestricted": "Tu cuenta no tiene acceso en este momento. Contactá a soporte.",
+    "rateLimited": "Hubo demasiados intentos. Esperá unos minutos antes de volver a ingresar.",
+    "serviceUnavailable": "No pudimos completar el ingreso. Intentá nuevamente en unos minutos.",
     "roleSelector": "Acceder como",
     "roleProvider": "Profesional",
     "roleClient": "Cliente",
     "browse": "Explorar sin iniciar sesión",
-    "connectionError": "No pudimos conectarnos. Verificá tu conexión y que la API esté disponible."
+    "connectionError": "No pudimos conectarnos. Verificá tu conexión y que la API esté disponible.",
+    "storageError": "No pudimos acceder al almacenamiento seguro. Reintentá antes de continuar.",
+    "nativeLoginRequired": "El inicio de sesión requiere la app de Android o iOS para guardar tus credenciales de forma segura.",
+    "chooseRole": "¿Cómo querés usar Lizto?",
+    "chooseClient": "Contratar un servicio",
+    "chooseProvider": "Trabajar como profesional",
+    "unsupportedRole": "Tu cuenta no tiene un rol habilitado para usar esta app."
   },
   "workRequests": {
     "title": "Solicitudes disponibles",
@@ -27,7 +36,10 @@
       "urgent": "Urgente",
       "high": "Alta",
       "normal": "Normal",
-      "scheduled": "Programado"
+      "scheduled": "Programado",
+      "immediate": "Inmediata",
+      "today": "Hoy",
+      "unknown": "No informada"
     },
     "viewDetails": "Ver detalle"
   },
@@ -40,7 +52,8 @@
     "errorTitle": "Ocurrió un error",
     "hello": "Hola, {{name}}",
     "refresh": "Actualizar lista",
-    "back": "Volver"
+    "back": "Volver",
+    "cancel": "Cancelar"
   },
   "brand": {
     "name": "lizto."
@@ -112,5 +125,98 @@
       "disputed": "En revisión",
       "no_show": "Ausencia registrada"
     }
+  },
+  "time": {
+    "justNow": "Recién publicado",
+    "minutes": "Hace {{count}} min",
+    "hours": "Hace {{count}} h",
+    "days": "Hace {{count}} d"
+  },
+  "offers": {
+    "title": "Componer oferta",
+    "description": "Proponé tus condiciones para el servicio.",
+    "disclaimer": "La oferta y el horario requieren confirmación; no bloquean tu agenda.",
+    "mode": {
+      "quoted": "Monto fijo",
+      "requires_visit": "Visita técnica"
+    },
+    "price": "Importe propuesto (ARS)",
+    "pricePlaceholder": "18.000,50",
+    "minPrice": "Estimado mínimo (ARS)",
+    "maxPrice": "Estimado máximo (ARS)",
+    "date": "Fecha propuesta (opcional)",
+    "datePlaceholder": "AAAA-MM-DD",
+    "time": "Hora de Argentina (opcional)",
+    "timePlaceholder": "HH:mm",
+    "duration": "Duración estimada en minutos (opcional)",
+    "notes": "Condiciones (opcional)",
+    "window": "Ventana solicitada: {{date}}, {{start}} a {{end}}",
+    "missingDate": "fecha no informada",
+    "outsideWindow": "El horario propuesto no coincide con la ventana solicitada o falta su fecha.",
+    "invalidDuration": "Ingresá una duración entera mayor a cero.",
+    "invalidForm": "Revisá los importes, la fecha, el horario, la duración y las condiciones. Usá coma para centavos.",
+    "invalidPrice": "Ingresá un importe válido mayor a cero.",
+    "invalidRange": "Revisá el rango: el mínimo no puede superar al máximo.",
+    "sendError": "No pudimos enviar la oferta. Reintentá.",
+    "submit": "Enviar oferta"
+  },
+  "questions": {
+    "title": "Hacer una pregunta",
+    "description": "Consultá detalles de tu oferta al cliente.",
+    "label": "Tu pregunta",
+    "placeholder": "¿Hay acceso para estacionar?",
+    "submit": "Enviar pregunta",
+    "required": "Ingresá una pregunta.",
+    "sendError": "No pudimos enviar la pregunta. Reintentá.",
+    "offerRequired": "Primero enviá una oferta para hacer preguntas."
+  },
+  "detail": {
+    "title": "Detalle de solicitud",
+    "errorTitle": "No pudimos cargar la solicitud",
+    "errorDescription": "Revisá tu conexión y reintentá.",
+    "offerSent": "Oferta enviada al cliente.",
+    "questionSent": "Pregunta enviada.",
+    "declineTitle": "Descartar solicitud",
+    "declineDescription": "¿Querés descartar esta solicitud de trabajo?",
+    "decline": "Descartar",
+    "declineError": "No pudimos descartar la solicitud. Reintentá.",
+    "locationUnavailable": "Ubicación no disponible",
+    "categoryUnavailable": "Categoría no informada",
+    "scheduleUnavailable": "Fecha a coordinar",
+    "location": "Ubicación:",
+    "schedule": "Horario solicitado:",
+    "radius": " (Radio aproximado: {{radius}} m)",
+    "urgency": "Urgencia: {{urgency}}",
+    "answers": "Respuestas aclaratorias",
+    "disclaimer": "El horario y el costo están sujetos a confirmación final por el cliente.",
+    "offer": "Ofertar",
+    "question": "Preguntar",
+    "locationHidden": "La ubicación recibida no cumple las condiciones de privacidad y fue ocultada.",
+    "declineUnavailable": "Descartar solicitudes no está disponible por el momento."
+  },
+  "chat": {
+    "sendError": "No pudimos enviar el mensaje. Reintentá.",
+    "errorTitle": "No pudimos cargar la conversación",
+    "errorDescription": "Revisá tu conexión y reintentá.",
+    "closedLabel": "Chat cerrado",
+    "request": "Pedido: {{prompt}}",
+    "retryHint": "Podés editar el mensaje y reintentar.",
+    "closedDescription": "El chat está cerrado porque el trabajo fue completado o cancelado.",
+    "placeholder": "Escribí un mensaje…",
+    "submit": "Enviar",
+    "refreshError": "No pudimos actualizar los mensajes. Se conserva el historial disponible.",
+    "title": "Conversación"
+  },
+  "validation": {
+    "email": "Ingresá un correo electrónico válido",
+    "passwordLogin": "Ingresá tu contraseña",
+    "name": "Ingresá tu nombre",
+    "nameMax": "El nombre no puede superar los 255 caracteres",
+    "phoneMax": "El teléfono no puede superar los 50 caracteres",
+    "passwordRegister": "La contraseña debe tener al menos 8 caracteres",
+    "passwordUppercase": "La contraseña debe contener al menos una letra mayúscula",
+    "passwordNumber": "La contraseña debe contener al menos un número",
+    "passwordConfirmation": "La confirmación de contraseña debe tener al menos 8 caracteres",
+    "passwordMismatch": "Las contraseñas no coinciden"
   }
 }

@@ -39,7 +39,10 @@ export async function httpClient<T>(
 ): Promise<T> {
   const { requiresAuth = true, headers = {}, ...rest } = options;
   const baseUrl = getApiUrl();
-  const url = `${baseUrl}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
+  if (!endpoint.startsWith('/') || endpoint.startsWith('/v1/') || endpoint.startsWith('//')) {
+    throw new Error('CONFIG_ERROR: Los endpoints deben ser relativos a la base /api/v1.');
+  }
+  const url = `${baseUrl.replace(/\/$/, '')}${endpoint}`;
 
   const defaultHeaders: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -47,8 +50,9 @@ export async function httpClient<T>(
     ...(headers as Record<string, string>),
   };
 
+  const requestToken = requiresAuth ? await getToken() : null;
   if (requiresAuth) {
-    const token = await getToken();
+    const token = requestToken;
     if (token) {
       defaultHeaders['Authorization'] = `Bearer ${token}`;
     }
@@ -60,15 +64,22 @@ export async function httpClient<T>(
   });
 
   if (response.status === 401) {
-    await removeToken();
-    notifyUnauthorized();
+    // A late response from a previous session must not revoke the new account.
+    if (requiresAuth && await getToken() === requestToken) {
+      try {
+        await removeToken();
+      } finally {
+        notifyUnauthorized();
+      }
+    }
     throw new HttpError(401, 'Unauthenticated');
   }
 
-  const json = await response.json().catch(() => ({}));
+  const json: unknown = await response.json().catch(() => null);
 
   if (!response.ok) {
-    const errorMessage = json?.message || `HTTP Error ${response.status}`;
+    const errorBody = z.object({ message: z.string() }).safeParse(json);
+    const errorMessage = errorBody.success ? errorBody.data.message : `HTTP Error ${response.status}`;
     throw new HttpError(response.status, errorMessage, json);
   }
 

@@ -1,41 +1,19 @@
 import Constants from 'expo-constants';
 
-const DEV_API_PORT = 8000;
-const API_PATH = '/api/v1';
-
-/**
- * Resuelve la URL base de la API.
- *
- * En desarrollo, un teléfono físico no puede resolver "localhost" a la máquina
- * que corre el servidor: localhost es el propio teléfono. Cuando la URL
- * configurada apunta a localhost, derivamos el host real desde el servidor de
- * Expo, que ya conoce la IP de la máquina de desarrollo.
- *
- * En producción se usa siempre el valor configurado, sin excepción.
- */
 export const getApiUrl = (): string => {
-  const configured = Constants.expoConfig?.extra?.apiUrl as string | undefined;
-
-  if (__DEV__) {
-    const pointsToLocalhost =
-      !configured || /localhost|127\.0\.0\.1/.test(configured);
-
-    if (pointsToLocalhost) {
-      const hostUri =
-        Constants.expoConfig?.hostUri ?? Constants.expoGoConfig?.debuggerHost;
-      const host = hostUri?.split(':')[0];
-
-      if (host) {
-        return `http://${host}:${DEV_API_PORT}${API_PATH}`;
-      }
-    }
+  const configured: unknown = Constants.expoConfig?.extra?.apiUrl;
+  if (typeof configured !== 'string' || !configured.trim()) {
+    throw new Error('CONFIG_ERROR: EXPO_PUBLIC_API_URL no está configurada.');
   }
-
-  if (!configured) {
-    throw new Error(
-      'CONFIG_ERROR: EXPO_PUBLIC_API_URL no está configurada en app.config.ts'
-    );
+  let url: URL;
+  try { url = new URL(configured); }
+  catch { throw new Error('CONFIG_ERROR: EXPO_PUBLIC_API_URL es inválida.'); }
+  if (!['https:', 'http:'].includes(url.protocol) || !url.pathname.match(/\/api\/v1\/?$/) || url.search || url.hash || url.username || url.password) {
+    throw new Error('CONFIG_ERROR: La base debe terminar en /api/v1.');
   }
-
-  return configured;
+  if (__DEV__ && ['localhost', '127.0.0.1'].includes(url.hostname)) {
+    const hostUri = Constants.expoConfig?.hostUri ?? Constants.expoGoConfig?.debuggerHost;
+    if (hostUri) url.hostname = new URL(`http://${hostUri}`).hostname;
+  }
+  return url.toString().replace(/\/$/, '');
 };

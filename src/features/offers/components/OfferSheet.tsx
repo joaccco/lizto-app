@@ -1,262 +1,85 @@
 import React, { useState } from 'react';
 import { View, ScrollView, Pressable } from 'react-native';
-import { GlassSheet, GlassButton, Input, Text, Badge } from '@/components/ui';
-import { PricingMode, isTimeWithinWindow } from '../schemas/offerSchema';
+import { useTranslation } from 'react-i18next';
+import { GlassSheet, GlassButton, Input, Text } from '@/components/ui';
+import { parseMoneyInput } from '@/core/domain/money';
+import { argentinaLocalToInstant, isInstantWithinWindow } from '@/core/domain/time';
+import { CreateOfferFormData, PricingMode, createOfferSchema } from '../schemas/offerSchema';
 
 interface OfferSheetProps {
   visible: boolean;
   onClose: () => void;
-  onSubmit: (payload: {
-    pricing_mode: PricingMode;
-    proposed_price?: number | null;
-    price_min?: number | null;
-    price_max?: number | null;
-    proposed_start_at?: string | null;
-    estimated_duration_min?: number;
-    notes?: string;
-  }) => Promise<void>;
+  onSubmit: (payload: CreateOfferFormData) => Promise<void>;
   windowStart?: string | null;
   windowEnd?: string | null;
   scheduledDate?: string | null;
   loading?: boolean;
 }
 
-export const OfferSheet: React.FC<OfferSheetProps> = ({
-  visible,
-  onClose,
-  onSubmit,
-  windowStart,
-  windowEnd,
-  scheduledDate,
-  loading = false,
-}) => {
+export const OfferSheet: React.FC<OfferSheetProps> = ({ visible, onClose, onSubmit, windowStart, windowEnd, scheduledDate, loading = false }) => {
+  const { t } = useTranslation();
   const [pricingMode, setPricingMode] = useState<PricingMode>('quoted');
   const [exactPrice, setExactPrice] = useState('');
   const [rangeMin, setRangeMin] = useState('');
   const [rangeMax, setRangeMax] = useState('');
-  const [proposedTime, setProposedTime] = useState(windowStart || '10:00');
-  const [durationMin, setDurationMin] = useState('60');
+  const [date, setDate] = useState(scheduledDate ?? '');
+  const [proposedTime, setProposedTime] = useState('');
+  const [durationMin, setDurationMin] = useState('');
   const [notes, setNotes] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
 
-  const handleFormSubmit = async () => {
+  const submit = async () => {
     setFormError(null);
-
-    let parsedPrice: number | null = null;
-    let parsedMin: number | null = null;
-    let parsedMax: number | null = null;
-
-    if (pricingMode === 'quoted') {
-      parsedPrice = parseFloat(exactPrice);
-      if (isNaN(parsedPrice) || parsedPrice <= 0) {
-        setFormError('Ingresá un importe válido mayor a $0.');
-        return;
-      }
-    } else {
-      parsedMin = parseFloat(rangeMin);
-      parsedMax = parseFloat(rangeMax);
-      if (isNaN(parsedMin) || isNaN(parsedMax) || parsedMin <= 0 || parsedMax <= 0) {
-        setFormError('Ingresá valores de rango estimativo válidos mayor a $0.');
-        return;
-      }
-      if (parsedMin > parsedMax) {
-        setFormError('El valor mínimo del rango no puede ser mayor que el máximo.');
-        return;
-      }
-    }
-
-    if (windowStart && windowEnd && proposedTime) {
-      const isWithin = isTimeWithinWindow(
-        `2026-08-25T${proposedTime}:00`,
-        windowStart,
-        windowEnd
-      );
-      if (!isWithin) {
-        setFormError(
-          `El horario propuesto (${proposedTime} hs) está fuera de la ventana solicitada por el cliente (${windowStart} hs - ${windowEnd} hs).`
-        );
-        return;
-      }
-    }
-
-    const targetDateStr = scheduledDate || new Date().toISOString().split('T')[0];
-    const proposedIsoDate = `${targetDateStr}T${proposedTime}:00.000Z`;
-
+    let payload: CreateOfferFormData;
     try {
-      const payload: any = {
+      // Una fecha sin hora puede ser el día solicitado; no constituye un instante propuesto.
+      const instant = proposedTime.trim() ? argentinaLocalToInstant(date.trim(), proposedTime.trim()) : undefined;
+      if (instant && (windowStart || windowEnd)) {
+        if (!windowStart || !windowEnd || !scheduledDate || !isInstantWithinWindow(instant, scheduledDate, windowStart, windowEnd)) {
+          setFormError(t('offers.outsideWindow')); return;
+        }
+      }
+      if (durationMin.trim() && !/^\d+$/.test(durationMin.trim())) {
+        setFormError(t('offers.invalidDuration')); return;
+      }
+      payload = createOfferSchema.parse({
         pricing_mode: pricingMode,
-        proposed_start_at: proposedIsoDate,
-        estimated_duration_min: parseInt(durationMin, 10) || 60,
-      };
-
-      if (pricingMode === 'quoted') {
-        payload.proposed_price = parsedPrice;
-      } else {
-        payload.price_min = parsedMin;
-        payload.price_max = parsedMax;
-      }
-
-      if (notes.trim()) {
-        payload.notes = notes.trim();
-      }
-
-      await onSubmit(payload);
-      onClose();
-    } catch (err: any) {
-      setFormError(err?.message || 'Ocurrió un error al enviar la oferta. Reintentá.');
+        currency_code: 'ARS',
+        ...(pricingMode === 'quoted'
+          ? { proposed_price: parseMoneyInput(exactPrice) }
+          : { price_min: parseMoneyInput(rangeMin), price_max: parseMoneyInput(rangeMax) }),
+        proposed_start_at: instant,
+        estimated_duration_min: durationMin.trim() ? Number(durationMin) : undefined,
+        notes: notes.trim() || undefined,
+      });
+    } catch {
+      setFormError(t('offers.invalidForm')); return;
     }
+    try { await onSubmit(payload); onClose(); }
+    catch { setFormError(t('offers.sendError')); }
   };
 
-  return (
-    <GlassSheet visible={visible} onClose={onClose}>
-      <ScrollView className="max-h-[80vh]" showsVerticalScrollIndicator={false}>
-        <Text variant="h2" weight="bold" className="mb-1">
-          Componer Oferta
-        </Text>
-        <Text variant="caption" muted className="mb-4">
-          Propone tus condiciones económicas y estimación para el servicio.
-        </Text>
-
-        <View className="bg-primary/10 border border-primary/30 rounded-2xl p-3 mb-4 space-y-1">
-          <Text variant="caption" className="text-primary font-medium">
-            💡 Esta oferta es una propuesta estimada y no constituye un acuerdo vinculante hasta ser confirmada.
-          </Text>
-          <Text variant="caption" muted className="text-xs mt-1">
-            📅 El horario propuesto no bloquea tu agenda hasta la reserva mutua.
-          </Text>
-        </View>
-
-        {formError ? (
-          <View className="bg-danger/15 border border-danger/30 rounded-2xl p-3 mb-4">
-            <Text variant="caption" className="text-danger font-semibold">
-              {formError}
-            </Text>
-          </View>
-        ) : null}
-
-        <View className="mb-5">
-          <Text variant="caption" weight="semibold" className="uppercase tracking-wider mb-2">
-            Modalidad de Cotización
-          </Text>
-          <View className="flex-row bg-muted rounded-2xl p-1 border border-border">
-            <Pressable
-              onPress={() => setPricingMode('quoted')}
-              className={`flex-1 py-3 rounded-xl items-center ${
-                pricingMode === 'quoted' ? 'bg-primary' : 'bg-transparent'
-              }`}
-            >
-              <Text
-                variant="body"
-                weight="bold"
-                className={pricingMode === 'quoted' ? 'text-foreground' : 'text-muted-foreground'}
-              >
-                Monto Fijo
-              </Text>
-            </Pressable>
-
-            <Pressable
-              onPress={() => setPricingMode('requires_visit')}
-              className={`flex-1 py-3 rounded-xl items-center ${
-                pricingMode === 'requires_visit' ? 'bg-primary' : 'bg-transparent'
-              }`}
-            >
-              <Text
-                variant="body"
-                weight="bold"
-                className={pricingMode === 'requires_visit' ? 'text-foreground' : 'text-muted-foreground'}
-              >
-                Visita Técnica
-              </Text>
-            </Pressable>
-          </View>
-        </View>
-
-        {pricingMode === 'quoted' ? (
-          <Input
-            label="Importe Propuesto ($ ARS)"
-            placeholder="Ej: 18000"
-            keyboardType="numeric"
-            value={exactPrice}
-            onChangeText={setExactPrice}
-            containerClassName="mb-4"
-            testID="offer-price-input"
-          />
-        ) : (
-          <View className="mb-4">
-            <View className="mb-2">
-              <Badge variant="warning" label="REQUIERE VISITA TÉCNICA Y DIAGNÓSTICO IN SITU" />
-            </View>
-            <Text variant="caption" muted className="mb-3">
-              Al requerir visita técnica, se comunica al cliente un rango estimado y no un precio cerrado.
-            </Text>
-            <View className="flex-row space-x-3">
-              <View className="flex-1">
-                <Input
-                  label="Estimado Mínimo ($)"
-                  placeholder="10000"
-                  keyboardType="numeric"
-                  value={rangeMin}
-                  onChangeText={setRangeMin}
-                  testID="offer-range-min-input"
-                />
-              </View>
-              <View className="flex-1">
-                <Input
-                  label="Estimado Máximo ($)"
-                  placeholder="25000"
-                  keyboardType="numeric"
-                  value={rangeMax}
-                  onChangeText={setRangeMax}
-                  testID="offer-range-max-input"
-                />
-              </View>
-            </View>
-          </View>
-        )}
-
-        <View className="mb-4">
-          <Input
-            label={`Horario Propuesto (Ventana pedida: ${windowStart || '09:00'} - ${windowEnd || '18:00'} hs)`}
-            placeholder="HH:mm (ej: 10:30)"
-            value={proposedTime}
-            onChangeText={setProposedTime}
-            containerClassName="mb-3"
-            testID="offer-time-input"
-          />
-
-          <Input
-            label="Duración Estimada (minutos)"
-            placeholder="60"
-            keyboardType="numeric"
-            value={durationMin}
-            onChangeText={setDurationMin}
-            containerClassName="mb-4"
-            testID="offer-duration-input"
-          />
-        </View>
-
-        <Input
-          label="Nota o Condiciones (Opcional)"
-          placeholder="Ej: Incluye mano de obra y materiales estándar."
-          value={notes}
-          onChangeText={setNotes}
-          multiline
-          numberOfLines={2}
-          containerClassName="mb-6"
-          testID="offer-note-input"
-        />
-
-        <GlassButton
-          variant={pricingMode === 'requires_visit' ? 'fluor' : 'primary'}
-          size="lg"
-          onPress={handleFormSubmit}
-          loading={loading}
-          disabled={loading}
-          testID="send-offer-submit-button"
-        >
-          {pricingMode === 'requires_visit' ? 'Enviar Propuesta con Visita' : 'Enviar Oferta Formal'}
-        </GlassButton>
-      </ScrollView>
-    </GlassSheet>
-  );
+  return <GlassSheet visible={visible} onClose={onClose}>
+    <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: '80%' }} keyboardShouldPersistTaps="handled">
+      <Text variant="h2" weight="bold">{t('offers.title')}</Text>
+      <Text variant="caption" muted className="mb-4">{t('offers.description')}</Text>
+      <Text variant="caption" className="mb-4">{t('offers.disclaimer')}</Text>
+      {formError ? <Text variant="caption" color="#FF5A5A" className="mb-4" accessibilityRole="alert">{formError}</Text> : null}
+      <View className="flex-row gap-2 mb-4">
+        {(['quoted', 'requires_visit'] as const).map(mode => <Pressable key={mode} accessibilityRole="radio" accessibilityState={{ selected: pricingMode === mode }} onPress={() => setPricingMode(mode)} className="flex-1 p-3 rounded-xl border border-border">
+          <Text weight={pricingMode === mode ? 'bold' : 'regular'}>{t(`offers.mode.${mode}`)}</Text>
+        </Pressable>)}
+      </View>
+      {pricingMode === 'quoted' ? <Input label={t('offers.price')} placeholder={t('offers.pricePlaceholder')} keyboardType="decimal-pad" value={exactPrice} onChangeText={setExactPrice} testID="offer-price-input" containerClassName="mb-4" /> : <>
+        <Input label={t('offers.minPrice')} keyboardType="decimal-pad" value={rangeMin} onChangeText={setRangeMin} testID="offer-range-min-input" containerClassName="mb-3" />
+        <Input label={t('offers.maxPrice')} keyboardType="decimal-pad" value={rangeMax} onChangeText={setRangeMax} testID="offer-range-max-input" containerClassName="mb-4" />
+      </>}
+      {windowStart && windowEnd ? <Text variant="caption" className="mb-3">{t('offers.window', { start: windowStart, end: windowEnd, date: scheduledDate ?? t('offers.missingDate') })}</Text> : null}
+      <Input label={t('offers.date')} placeholder={t('offers.datePlaceholder')} value={date} onChangeText={setDate} testID="offer-date-input" containerClassName="mb-3" />
+      <Input label={t('offers.time')} placeholder={t('offers.timePlaceholder')} value={proposedTime} onChangeText={setProposedTime} testID="offer-time-input" containerClassName="mb-3" />
+      <Input label={t('offers.duration')} keyboardType="number-pad" value={durationMin} onChangeText={setDurationMin} testID="offer-duration-input" containerClassName="mb-3" />
+      <Input label={t('offers.notes')} value={notes} onChangeText={setNotes} multiline maxLength={1000} testID="offer-note-input" containerClassName="mb-4" />
+      <GlassButton size="lg" onPress={() => void submit()} loading={loading} disabled={loading} testID="send-offer-submit-button">{t('offers.submit')}</GlassButton>
+    </ScrollView>
+  </GlassSheet>;
 };

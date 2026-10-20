@@ -1,7 +1,7 @@
 import {
   createOfferSchema,
-  isTimeWithinWindow,
 } from '@/features/offers/schemas/offerSchema';
+import { isInstantWithinWindow } from '@/core/domain/time';
 import { workRequestDetailSchema } from '@/features/work-requests/schemas/workRequestDetailSchema';
 
 describe('Criterios de Aceptación: Motor de Ofertas y Reglas de Dominio', () => {
@@ -45,6 +45,7 @@ describe('Criterios de Aceptación: Motor de Ofertas y Reglas de Dominio', () =>
     test('Acepta oferta con visita técnica y rango estimativo válido (min < max)', () => {
       const validVisitData = {
         pricing_mode: 'requires_visit',
+        currency_code: 'ARS',
         price_min: 10000,
         price_max: 25000,
         estimated_duration_min: 90,
@@ -57,6 +58,7 @@ describe('Criterios de Aceptación: Motor de Ofertas y Reglas de Dominio', () =>
     test('Rechaza oferta con visita técnica si rango mínimo > máximo', () => {
       const invalidVisitData = {
         pricing_mode: 'requires_visit',
+        currency_code: 'ARS',
         price_min: 30000,
         price_max: 15000,
       };
@@ -68,6 +70,7 @@ describe('Criterios de Aceptación: Motor de Ofertas y Reglas de Dominio', () =>
     test('Rechaza oferta con visita técnica si se envía proposed_price', () => {
       const invalidVisitData = {
         pricing_mode: 'requires_visit',
+        currency_code: 'ARS',
         proposed_price: 15000,
         price_min: 10000,
         price_max: 25000,
@@ -80,12 +83,12 @@ describe('Criterios de Aceptación: Motor de Ofertas y Reglas de Dominio', () =>
 
   describe('Criterio 3: Validación de ventana horaria solicitada', () => {
     test('Acepta un horario propuesto dentro de la ventana solicitada', () => {
-      const isWithin = isTimeWithinWindow('2026-08-25T10:30:00.000Z', '09:00', '13:00');
+      const isWithin = isInstantWithinWindow('2026-08-25T13:30:00.000Z', '2026-08-25', '09:00', '13:00');
       expect(isWithin).toBe(true);
     });
 
     test('Rechaza un horario propuesto fuera de la ventana solicitada', () => {
-      const isWithin = isTimeWithinWindow('2026-08-25T15:00:00.000Z', '09:00', '13:00');
+      const isWithin = isInstantWithinWindow('2026-08-25T18:00:00.000Z', '2026-08-25', '09:00', '13:00');
       expect(isWithin).toBe(false);
     });
   });
@@ -93,7 +96,7 @@ describe('Criterios de Aceptación: Motor de Ofertas y Reglas de Dominio', () =>
   describe('Criterio 4: Ubicación aproximada desde el servidor', () => {
     test('Valida correctamente campos is_approximate y location_radius_meters del servidor', () => {
       const serverResponse = {
-        id: 'req-123',
+        id: '550e8400-e29b-41d4-a716-446655440000',
         uuid: '550e8400-e29b-41d4-a716-446655440000',
         raw_prompt: 'Reparación de filtración',
         status: 'pending_matching',

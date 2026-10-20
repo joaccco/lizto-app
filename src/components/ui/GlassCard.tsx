@@ -26,7 +26,7 @@ export const GlassCard: React.FC<GlassCardProps> = ({
         style={style}
         {...props}
       >
-        {children}
+        <View className="p-4">{children}</View>
       </View>
     );
   }

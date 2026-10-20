@@ -11,15 +11,18 @@ import { useAuthStore } from '@/features/auth/store/useAuthStore';
 
 export default function AccountScreen() {
   const { t } = useTranslation();
-  const { token, activeRole, setActiveRole, logout } = useAuthStore();
+  const { token, logout } = useAuthStore();
   const query = useMe();
   const queryClient = useQueryClient();
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
   const signOut = async () => {
     setBusy(true); setFailed(false);
-    try { await authApi.logout(); await logout(); queryClient.clear(); }
-    catch { setFailed(true); }
+    try {
+      try { await authApi.logout(); } catch { setFailed(true); }
+      await logout();
+      queryClient.clear();
+    } catch { setFailed(true); }
     finally { setBusy(false); }
   };
   return <Screen title={t('account.title')} subtitle={t('account.description')}>
@@ -29,10 +32,7 @@ export default function AccountScreen() {
           <Text variant="h2" weight="bold">{query.data.name}</Text>
           <Text muted>{query.data.email}</Text>
           {query.data.phone ? <Text muted>{query.data.phone}</Text> : null}
-          <Text color="#A8FF35" variant="caption">{t(activeRole === 'provider' ? 'auth.roleProvider' : 'auth.roleClient')}</Text>
         </View>
-        {query.data.roles.includes('client') && query.data.roles.includes('provider') ?
-          <GlassButton variant="outline" onPress={() => { setFailed(false); void setActiveRole(activeRole === 'provider' ? 'client' : 'provider').catch(() => setFailed(true)); }}>{t(activeRole === 'provider' ? 'account.switchClient' : 'account.switchProvider')}</GlassButton> : null}
       </> : null}
     {failed ? <Text color="#FF5A5A">{t('account.actionError')}</Text> : null}
     {token ? <GlassButton variant="danger" loading={busy} onPress={() => void signOut()}>{t('common.logout')}</GlassButton> : null}

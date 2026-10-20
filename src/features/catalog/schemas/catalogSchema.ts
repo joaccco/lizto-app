@@ -6,11 +6,11 @@ export const categoriesResponseSchema = z.object({ data: z.array(categorySchema.
 export type Category = z.infer<typeof categorySchema>;
 
 // Only allow fields used by this UI through the boundary. In particular, discard
-// contact details and exact locations returned by the current public endpoint.
+// contact details and exact locations, incluso ante una regresión del backend.
 export const providerSchema = z.object({
   uuid: z.string().uuid(), name: z.string(), bio: z.string().nullable(),
   category_name: z.string(), specialties: z.array(z.string()),
-  avg_rating: z.number(), total_reviews: z.number().int().nonnegative(),
+  avg_rating: z.number().nullable(), total_reviews: z.number().int().nonnegative(),
   is_verified: z.boolean(), availability_status: z.string(),
 });
 export const providersResponseSchema = z.object({

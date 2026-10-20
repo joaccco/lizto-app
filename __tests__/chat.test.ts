@@ -8,7 +8,7 @@ describe('Criterios de Aceptación: Módulo de Chat y Reglas de Dominio', () => 
   describe('Criterio 1 y 3: Parseo de Esquemas de Conversación y Estado Cerrado', () => {
     test('Parsea correctamente una conversación activa con sus mensajes', () => {
       const activeConversationData = {
-        conversation_id: 'conv-123',
+        conversation_id: '550e8400-e29b-41d4-a716-446655440000',
         client_id: 'user-client-1',
         client_name: 'Ana Clienta',
         provider_id: 'user-pro-1',
@@ -19,7 +19,7 @@ describe('Criterios de Aceptación: Módulo de Chat y Reglas de Dominio', () => 
         is_closed: false,
         messages: [
           {
-            id: 'msg-1',
+            id: '550e8400-e29b-41d4-a716-446655440002',
             sender_id: 'user-client-1',
             sender_name: 'Ana Clienta',
             content: 'Hola, ¿a qué hora podrías pasar?',
@@ -39,7 +39,7 @@ describe('Criterios de Aceptación: Módulo de Chat y Reglas de Dominio', () => 
 
     test('Identifica correctamente una conversación cerrada por trabajo completado/cancelado', () => {
       const closedConversationData = {
-        conversation_id: 'conv-456',
+        conversation_id: '550e8400-e29b-41d4-a716-446655440001',
         client_id: 'user-client-1',
         client_name: 'Ana Clienta',
         provider_id: 'user-pro-1',
@@ -70,28 +70,7 @@ describe('Criterios de Aceptación: Módulo de Chat y Reglas de Dominio', () => 
       expect(validResult.success).toBe(true);
     });
 
-    test('Simula preservación de texto ante rechazo del servidor por Anti-Contact Guard (HTTP 422)', () => {
-      let inputText = 'Mi WhatsApp es 11 1234 5678 para coordinar por ahí.';
-      let errorMessage: string | null = null;
+    // La conservación real del texto se verifica interactuando con ChatScreen en chat-screen.test.tsx.
 
-      // Simulación de respuesta 422 del servidor por Anti-Contact Guard
-      const mockServerError = {
-        status: 422,
-        message: 'No se permite compartir datos de contacto (teléfono, WhatsApp, email) antes de la contratación.',
-      };
-
-      // Al fallar, se asigna el mensaje de error pero NO se borra inputText
-      errorMessage = mockServerError.message;
-
-      expect(errorMessage).toContain('No se permite compartir datos de contacto');
-      expect(inputText).toBe('Mi WhatsApp es 11 1234 5678 para coordinar por ahí.');
-
-      // Usuario edita el texto para remover el contacto y reintentar
-      inputText = 'Hola, confirmo que puedo pasar a las 10 hs.';
-      errorMessage = null;
-
-      expect(inputText).toBe('Hola, confirmo que puedo pasar a las 10 hs.');
-      expect(errorMessage).toBeNull();
-    });
   });
 });

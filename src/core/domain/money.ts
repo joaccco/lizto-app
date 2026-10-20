@@ -1,44 +1,40 @@
-/**
- * Invariante ADR-010: El dinero es un entero en la unidad mínima de la moneda
- * acompañado del código ISO de la moneda (ej. ARS).
- */
+import { z } from 'zod';
 
-export interface Money {
-  amountInCents: number;
-  currency: string;
-}
+export const currencySchema = z.string().regex(/^[A-Z]{3}$/);
+export const minorAmountSchema = z.number().int().nonnegative().safe();
+export const moneySchema = z.object({ amountInCents: minorAmountSchema, currency: currencySchema });
+export type Money = z.infer<typeof moneySchema>;
 
 export function createMoney(amountInCents: number, currency: string = 'ARS'): Money {
-  if (!Number.isInteger(amountInCents)) {
-    throw new Error(`MONEY_ERROR: amountInCents debe ser un número entero. Valor recibido: ${amountInCents}`);
-  }
-  return {
-    amountInCents,
-    currency,
-  };
+  const result = moneySchema.safeParse({ amountInCents, currency });
+  if (!result.success) throw new Error('MONEY_ERROR: Importe o moneda inválidos.');
+  return result.data;
 }
 
-/**
- * Convierte un monto decimal recibido del backend (ej. 15000.00) a unidad mínima entera (centavos).
- */
+// Conversión decimal exclusivamente para el contrato heredado del backend.
 export function parseDecimalToMoney(decimalAmount: number | string, currency: string = 'ARS'): Money {
-  const num = typeof decimalAmount === 'string' ? parseFloat(decimalAmount) : decimalAmount;
-  if (isNaN(num)) {
-    return createMoney(0, currency);
-  }
-  const cents = Math.round(num * 100);
-  return createMoney(cents, currency);
+  const text = String(decimalAmount);
+  if (!/^\d+(?:\.\d{1,2})?$/.test(text)) throw new Error('MONEY_ERROR: Decimal inválido.');
+  const [whole, fraction = ''] = text.split('.');
+  return createMoney(Number(whole) * 100 + Number(fraction.padEnd(2, '0')), currency);
 }
 
-/**
- * Formatea el dinero a texto exclusivamente en la capa de presentación.
- */
-export function formatMoney(money: Money): string {
-  const mainUnits = money.amountInCents / 100;
-  const formattedNumber = new Intl.NumberFormat('es-AR', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(mainUnits);
+// El ingreso es texto de presentación es-AR; el resultado siempre es entero.
+export function parseMoneyInput(text: string): number {
+  const value = text.trim();
+  if (!/^(?:\d+|\d{1,3}(?:\.\d{3})+)(?:,\d{1,2})?$/.test(value)) {
+    throw new Error('MONEY_ERROR: Importe inválido.');
+  }
+  return parseDecimalToMoney(value.replace(/\./g, '').replace(',', '.')).amountInCents;
+}
 
-  return `$ ${formattedNumber} ${money.currency}`;
+// Serializa para Laravel sin pasar por un número decimal de punto flotante.
+export function toBackendDecimal(amountInCents: number): string {
+  minorAmountSchema.parse(amountInCents);
+  return `${Math.floor(amountInCents / 100)}.${String(amountInCents % 100).padStart(2, '0')}`;
+}
+
+export function formatMoney(money: Money): string {
+  const validated = moneySchema.parse(money);
+  return new Intl.NumberFormat('es-AR', { style: 'currency', currency: validated.currency, currencyDisplay: 'code' }).format(validated.amountInCents / 100);
 }

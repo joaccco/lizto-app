@@ -29,7 +29,7 @@ export const WorkRequestCard: React.FC<WorkRequestCardProps> = ({ item, onPress 
   };
 
   const urgencyKey = `workRequests.urgency.${item.urgency.toLowerCase()}`;
-  const urgencyLabel = t(urgencyKey, { defaultValue: item.urgency });
+  const urgencyLabel = t(urgencyKey, { defaultValue: t('workRequests.urgency.unknown') });
 
   return (
     <Card
@@ -38,7 +38,7 @@ export const WorkRequestCard: React.FC<WorkRequestCardProps> = ({ item, onPress 
       testID="work-request-card"
     >
       <View className="flex-row justify-between items-center mb-3">
-        <Badge variant="category" label={item.category} />
+        <Badge variant="category" label={item.category ?? t('detail.categoryUnavailable')} />
         <Badge variant={getUrgencyVariant(item.urgency)} label={urgencyLabel} />
       </View>
 
@@ -49,9 +49,9 @@ export const WorkRequestCard: React.FC<WorkRequestCardProps> = ({ item, onPress 
       <View className="flex-row items-center justify-between mt-2 pt-3 border-t border-border">
         <View className="flex-row items-center">
           <Text variant="caption">
-            📍 Zona:{' '}
+            {t('detail.location')}
             <Text variant="caption" weight="semibold" className="text-foreground">
-              {item.location}
+              {item.location_address ?? t('detail.locationUnavailable')}
             </Text>
           </Text>
         </View>

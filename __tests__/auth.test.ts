@@ -1,5 +1,7 @@
 import { saveToken, getToken, removeToken } from '../src/core/security/secureStore';
 import { useAuthStore } from '../src/features/auth/store/useAuthStore';
+import { resolveRole } from '@/features/auth/domain/resolveRole';
+import { saveActiveRole, getActiveRole } from '@/core/security/secureStore';
 import { User } from '../src/features/auth/schemas/authSchema';
 
 describe('Criterios de Aceptación: Autenticación, Persistencia y Roles Dinámicos', () => {
@@ -50,9 +52,8 @@ describe('Criterios de Aceptación: Autenticación, Persistencia y Roles Dinámi
       has_provider_profile: false,
     };
 
-    const derivedRole = await useAuthStore.getState().deriveActiveRoleFromUser(clientUser);
-    expect(derivedRole).toBe('client');
-    expect(useAuthStore.getState().activeRole).toBe('client');
+    const derivedRole = resolveRole(clientUser.roles, null);
+    expect(derivedRole).toEqual({ status: 'resolved', role: 'client' });
   });
 
   test('A2b. Usuario con solo rol provider deriva activeRole = provider', async () => {
@@ -65,9 +66,8 @@ describe('Criterios de Aceptación: Autenticación, Persistencia y Roles Dinámi
       has_provider_profile: true,
     };
 
-    const derivedRole = await useAuthStore.getState().deriveActiveRoleFromUser(proUser);
-    expect(derivedRole).toBe('provider');
-    expect(useAuthStore.getState().activeRole).toBe('provider');
+    const derivedRole = resolveRole(proUser.roles, null);
+    expect(derivedRole).toEqual({ status: 'resolved', role: 'provider' });
   });
 
   test('A2c. Usuario con ambos roles reabre en el último rol utilizado', async () => {
@@ -81,25 +81,38 @@ describe('Criterios de Aceptación: Autenticación, Persistencia y Roles Dinámi
     };
 
     // Cambiar explicitamente a cliente
-    await useAuthStore.getState().setActiveRole('client');
+    await saveActiveRole(dualUser.id, 'client');
 
-    const derivedRole = await useAuthStore.getState().deriveActiveRoleFromUser(dualUser);
-    expect(derivedRole).toBe('client');
+    const derivedRole = resolveRole(dualUser.roles, await getActiveRole(dualUser.id));
+    expect(derivedRole).toEqual({ status: 'resolved', role: 'client' });
   });
 
   test('4. El esquema de registro omite el campo role y valida datos requeridos', () => {
     const { registerSchema } = require('../src/features/auth/schemas/authSchema');
     const validRegisterData = {
+      role: 'provider',
       name: 'Nuevo Usuario',
       email: 'nuevo@test.com',
-      password: 'password123',
-      password_confirmation: 'password123',
+      password: 'Password123',
+      password_confirmation: 'Password123',
     };
 
     const parseResult = registerSchema.safeParse(validRegisterData);
     expect(parseResult.success).toBe(true);
     if (parseResult.success) {
-      expect((parseResult.data as any).role).toBeUndefined();
+      expect(parseResult.data).not.toHaveProperty('role');
     }
   });
+});
+
+
+test('la preferencia de una cuenta no se hereda por otra ni se restaura sin consultar roles', async () => {
+  await saveActiveRole('account-a', 'provider');
+  await saveActiveRole('account-b', 'client');
+  expect(resolveRole(['client', 'provider'], await getActiveRole('account-a'))).toEqual({ status: 'resolved', role: 'provider' });
+  expect(resolveRole(['client', 'provider'], await getActiveRole('account-b'))).toEqual({ status: 'resolved', role: 'client' });
+  expect(resolveRole(['client', 'provider'], await getActiveRole('account-new'))).toEqual({ status: 'selection_required' });
+  await saveToken('session');
+  await useAuthStore.getState().initializeSession();
+  expect(useAuthStore.getState().activeRole).toBeNull();
 });

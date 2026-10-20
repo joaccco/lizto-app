@@ -1,10 +1,16 @@
 # Reglas permanentes — lizto-mobile
 
+> **Contexto para retomar trabajo:** consultar [docs/ROADMAP-IMPLEMENTACIONES.md](docs/ROADMAP-IMPLEMENTACIONES.md) y la guía compartida de `../lizto-engineering`. El roadmap es una propuesta contextual; no reemplaza estas reglas ni autoriza ampliar el alcance del prompt. Verificar su estado contra el código y Trello antes de implementar.
+
+> **Criterio de revisión acordado con Mateo (2026-10-11):** documentación, Trello e informes de IA son referencias revisables, no autoridad incuestionable. Contrastar afirmaciones con evidencia y señalar inconsistencias o propuestas poco eficientes o eficaces, explicando impacto y alternativas para resolverlas en equipo. Que algo exista en código no demuestra que su diseño sea correcto. Mantener las restricciones operativas aplicables y no decidir unilateralmente cambios de negocio o alcance.
+
+> **Rendimiento acordado con Mateo (2026-10-11):** priorizar que el sistema sea rápido en los recorridos reales: inicio, navegación, carga de listas, búsqueda, envío de ofertas y chat. Evaluar latencia, fluidez, consumo de red, memoria y batería, especialmente en teléfonos modestos y conexiones lentas. Evitar peticiones duplicadas, consultas innecesarias, renders costosos y polling indiscriminado; aprovechar caché y paginación cuando el contrato lo permita. Medir los cuellos de botella y comprobar el efecto de las optimizaciones con evidencia proporcional. Señalar problemas y alternativas al equipo. No sacrificar seguridad, privacidad, corrección ni claridad por velocidad, ni introducir complejidad o dependencias sin beneficio demostrado.
+
 > Este archivo es la fuente de verdad de las reglas del repositorio.
 > Se aplica a **todo** cambio, sin excepción y sin que haga falta repetirlo en cada prompt.
 > Si un prompt contradice este archivo, **gana este archivo** y hay que reportar la contradicción.
 >
-> Última verificación contra `lizto-api`: 2026-08-22.
+> Última revisión estática de contratos consumidos contra `lizto-api`: 2026-10-20 (commit `db4f1e6` más cambio local autorizado de contraseñas). Detalle y límites en [docs/ETAPA-1-ALCANCE-Y-CONTRATOS.md](docs/ETAPA-1-ALCANCE-Y-CONTRATOS.md).
 
 ---
 
@@ -15,6 +21,7 @@ App móvil de Lizto, marketplace de servicios a domicilio en Argentina.
 - **Una sola app** para iOS y Android, con dos roles: cliente y profesional. Un profesional también contrata servicios.
 - Repositorio remoto: `https://github.com/joaccco/lizto-app`
 - Consume `lizto-api` (Laravel 13, DDD por capas). No se modifica `lizto-api` desde este repo.
+- **Arquitectura confirmada por Mateo (2026-10-11):** toda la experiencia de la app se implementa en React Native y consume `lizto-api`. Los recorridos de cliente y profesional deben resolverse en la app móvil; la web puede servir de referencia, pero no reemplaza una implementación ni una validación nativa. La lógica y las autoridades de negocio permanecen en la API.
 - Stack: Expo + Expo Router + TypeScript strict + NativeWind + TanStack Query + Zustand + Zod.
 
 ---
@@ -29,7 +36,7 @@ Estos datos fueron leídos del código real. **No los adivines ni los cambies si
 - `POST /v1/auth/login` → `{ data: { user, token }, message }`
 - `POST /v1/auth/register` → mismo shape, HTTP 201
 - `POST /v1/auth/logout` · `GET /v1/auth/me`
-- Todas las rutas `/v1` restantes exigen `auth:sanctum`.
+- Catálogo (`categories`, `providers`, detalle/reseñas), parser de solicitudes y health son públicos; el webhook Didit es público con validación de firma. Las rutas personales exigen `auth:sanctum` y control de suspensión. Verificar permisos específicos en cada controlador/política.
 
 ### Roles
 
@@ -43,11 +50,11 @@ En la app solo existen dos roles activos: **`provider`** y **`client`**. Escrito
 
 ### Identificadores
 
-Los recursos se exponen por **`uuid`**, no por id numérico. Los esquemas de validación deben esperar string uuid.
+Los recursos principales consumidos se exponen por **`uuid`**. Las categorías se identifican por slug y las preguntas de ofertas exponen ID numérico. Validar cada identificador según su contrato comprobado; no convertir IDs internos en UUID ficticios.
 
 ### Forma de las respuestas
 
-`{ "data": ... }`. **No hay envelope de paginación ni metadatos.**
+Las lecturas habituales usan `{ "data": ... }`; catálogo y solicitudes del cliente incluyen `meta` de paginación. La bandeja profesional devuelve `{data:[]}` sin paginación y limita a 10. Logout devuelve `{message}`. Validar el envelope específico de cada endpoint.
 
 ### Instantes
 
@@ -121,6 +128,8 @@ Prohibido crear datos simulados, valores por defecto inventados o mocks silencio
 ---
 
 ## Cómo trabajar en este repositorio
+
+- **Responsabilidades confirmadas por Mateo (2026-10-11):** Mateo y este agente desarrollan la app React Native y su integración con `lizto-api`. Su compañero desarrolla la API y la web. Cuando la app necesite un cambio de backend, describir el contrato necesario, el motivo, los criterios de aceptación y qué entrega móvil bloquea, para coordinarlo con el compañero. No implementar cambios de API o web desde este trabajo ni asumir que una propuesta de contrato ya existe. Continuar las tareas móviles independientes mientras se resuelven dependencias.
 
 - **Un cambio por prompt.** No unifiques prompts ni adelantes trabajo de otro.
 - **No inventes endpoints.** Si algo que necesitás no existe en `lizto-api`, decilo en el resumen y dejá la integración detrás de una interfaz.

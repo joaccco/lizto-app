@@ -1,113 +1,61 @@
 import { httpClient } from '@/core/api/httpClient';
 import { z } from 'zod';
-import { CreateOfferFormData, AskQuestionFormData } from '../schemas/offerSchema';
+import { minorAmountSchema, currencySchema, parseDecimalToMoney, toBackendDecimal } from '@/core/domain/money';
+import { instantSchema } from '@/core/domain/time';
+import { CreateOfferFormData, AskQuestionFormData, createOfferSchema, askQuestionSchema, pricingModeEnum } from '../schemas/offerSchema';
 import { ConfirmWorkRequestPayload, confirmWorkRequestSchema } from '../schemas/confirmRequestSchema';
 
+const legacyDecimalSchema = z.union([z.string(), z.number()]).transform((value, ctx) => {
+  try { return parseDecimalToMoney(value).amountInCents; }
+  catch { ctx.addIssue({ code: 'custom', message: 'MONEY_CONTRACT_ERROR' }); return z.NEVER; }
+});
 const offerResponseSchema = z.object({
   data: z.object({
-    id: z.string(),
-    status: z.string(),
-    pricing_mode: z.string(),
-    proposed_price: z.number().nullable().optional(),
-    price_min: z.number().nullable().optional(),
-    price_max: z.number().nullable().optional(),
-    notes: z.string().nullable().optional(),
-    currency_code: z.string(),
-    round_number: z.number(),
+    id: z.string().uuid(), status: z.string(), pricing_mode: pricingModeEnum,
+    proposed_price: legacyDecimalSchema.nullable(),
+    price_min: minorAmountSchema.nullable(), price_max: minorAmountSchema.nullable(),
+    notes: z.string().nullable(), currency_code: currencySchema,
+    round_number: z.number().int().positive(),
   }),
   message: z.string(),
 });
-
 const askQuestionResponseSchema = z.object({
-  data: z.object({
-    id: z.number().or(z.string()),
-    question_text: z.string().optional(),
-  }),
-  message: z.string(),
+  // El backend expone ID numérico de pregunta. Se descarta porque la app no lo utiliza.
+  data: z.object({ question_text: z.string() }), message: z.string(),
 });
-
-const actionResponseSchema = z.object({
-  message: z.string(),
-  data: z.record(z.string(), z.any()).optional(),
+const declineResponseSchema = z.object({
+  data: z.object({ id: z.string().uuid(), status: z.literal('declined') }), message: z.string(),
+});
+const confirmResponseSchema = z.object({
+  data: z.object({
+    id: z.string().uuid(), work_id: z.string().uuid(), conversation_id: z.string().uuid().nullable(),
+    status: z.literal('confirmed'), estimated_duration_min: z.number().int().positive().nullable(),
+    scheduled_at: instantSchema.nullable(),
+  }), message: z.string(),
 });
 
 export const offersApi = {
-  /**
-   * Creación de oferta para una solicitud de trabajo
-   * POST /v1/service-requests/{id}/offers
-   */
   async store(serviceRequestId: string, data: CreateOfferFormData) {
-    const payload: Record<string, string | number | boolean | null | undefined> = {
-      pricing_mode: data.pricing_mode,
-      currency_code: data.currency_code || 'ARS',
-    };
-
-    if (data.pricing_mode === 'quoted') {
-      if (data.proposed_price !== undefined && data.proposed_price !== null) {
-        payload.proposed_price = data.proposed_price;
-      }
-    } else if (data.pricing_mode === 'requires_visit') {
-      if (data.price_min !== undefined && data.price_min !== null) {
-        payload.price_min = data.price_min;
-      }
-      if (data.price_max !== undefined && data.price_max !== null) {
-        payload.price_max = data.price_max;
-      }
-    }
-
-    if (data.proposed_start_at) {
-      payload.proposed_start_at = data.proposed_start_at;
-    }
-    if (data.estimated_duration_min) {
-      payload.estimated_duration_min = data.estimated_duration_min;
-    }
-    if (data.notes) {
-      payload.notes = data.notes;
-    }
-
-    return httpClient.post(
-      `/v1/service-requests/${serviceRequestId}/offers`,
-      offerResponseSchema,
-      payload
-    );
+    z.string().uuid().parse(serviceRequestId);
+    const validated = createOfferSchema.parse(data);
+    // Deuda backend: quoted es decimal de unidades mayores; los rangos YA son centavos.
+    const payload = { ...validated, proposed_price: validated.proposed_price == null ? undefined : toBackendDecimal(validated.proposed_price) };
+    return httpClient.post(`/service-requests/${serviceRequestId}/offers`, offerResponseSchema, payload);
   },
-
-  /**
-   * Enviar pregunta aclaratoria previa o posterior a la oferta
-   * POST /v1/offers/{id}/questions
-   */
-  async askQuestion(offerOrRequestId: string, data: AskQuestionFormData) {
-    return httpClient.post(
-      `/v1/offers/${offerOrRequestId}/questions`,
-      askQuestionResponseSchema,
-      {
-        question_key: 'general_question',
-        question_text: data.question_text,
-      }
-    );
+  async askQuestion(offerId: string, data: AskQuestionFormData) {
+    z.string().uuid().parse(offerId);
+    const validated = askQuestionSchema.parse(data);
+    return httpClient.post(`/offers/${offerId}/questions`, askQuestionResponseSchema, { question_key: 'general_question', ...validated });
   },
-
-  /**
-   * Confirmar solicitud de trabajo como profesional
-   * POST /v1/provider/work-requests/{id}/confirm
-   */
-  async confirmRequest(id: string, payload?: ConfirmWorkRequestPayload) {
-    const validatedPayload = payload ? confirmWorkRequestSchema.parse(payload) : {};
-    return httpClient.post(
-      `/v1/provider/work-requests/${id}/confirm`,
-      actionResponseSchema,
-      validatedPayload
-    );
+  async confirmRequest(id: string, data?: ConfirmWorkRequestPayload) {
+    z.string().uuid().parse(id);
+    const validated = confirmWorkRequestSchema.parse(data ?? {});
+    return httpClient.post(`/provider/work-requests/${id}/confirm`, confirmResponseSchema, {
+      ...validated, proposed_price: validated.proposed_price == null ? undefined : toBackendDecimal(validated.proposed_price),
+    });
   },
-
-  /**
-   * Descartar / declinar solicitud de trabajo
-   * POST /v1/provider/work-requests/{id}/decline
-   */
   async declineRequest(id: string) {
-    return httpClient.post(
-      `/v1/provider/work-requests/${id}/decline`,
-      actionResponseSchema
-    );
+    z.string().uuid().parse(id);
+    return httpClient.post(`/provider/work-requests/${id}/decline`, declineResponseSchema);
   },
 };

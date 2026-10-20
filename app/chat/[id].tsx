@@ -1,28 +1,28 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { View, FlatList, SafeAreaView, Pressable, KeyboardAvoidingView, Platform } from 'react-native';
+import React, { useState, useRef, useEffect, useContext } from 'react';
+import { View, FlatList, Pressable, KeyboardAvoidingView, Platform } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { ConversationNameField } from '@/core/navigation/ConversationPresentation';
+import { HttpError } from '@/core/api/httpClient';
+import { useTranslation } from 'react-i18next';
 import { useConversation, useSendMessage } from '@/features/chat/api/useChat';
-import { useAuthStore } from '@/features/auth/store/useAuthStore';
 import { GlassNav, GlassButton, Input, Text, Badge, Skeleton, ErrorState } from '@/components/ui';
 import { formatTimeAgo } from '@/core/domain/time';
 
 export default function ChatScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const { t } = useTranslation();
   const flatListRef = useRef<FlatList>(null);
 
-  const activeRole = useAuthStore((state) => state.activeRole);
-  const { data: conversation, isLoading, isError, error, refetch } = useConversation(id as string);
+  const { data: conversation, isLoading, isError, refetch } = useConversation(id as string);
   const sendMessageMutation = useSendMessage(id as string);
 
   const [messageText, setMessageText] = useState('');
   const [guardError, setGuardError] = useState<string | null>(null);
 
-  // Determinar nombre del interlocutor según el rol activo local
-  const counterpartName =
-    activeRole === 'provider'
-      ? conversation?.client_name || 'Cliente'
-      : conversation?.provider_name || 'Profesional';
+  const nameField = useContext(ConversationNameField);
+  const counterpartName = (nameField && conversation?.[nameField]) || t('chat.title');
 
   // Autoscroll al mensaje más reciente al cargar mensajes por primera vez o recibir nuevos
   useEffect(() => {
@@ -46,18 +46,18 @@ export default function ChatScreen() {
       setTimeout(() => {
         flatListRef.current?.scrollToEnd({ animated: true });
       }, 100);
-    } catch (err: any) {
+    } catch (err) {
       // Si el servidor rechaza por Anti-Contact Guard o falla de red:
       // Conservar el texto en el input para que el usuario edite y reintente (Criterio 2 y 4)
-      const serverMessage = err?.message || 'Error al enviar mensaje. Verifique su conexión y reintente.';
+      const serverMessage = err instanceof HttpError ? err.message : t('chat.sendError');
       setGuardError(serverMessage);
     }
   };
 
   if (isLoading && !conversation) {
     return (
-      <SafeAreaView className="flex-1 bg-background">
-        <GlassNav title="Cargando Chat..." />
+      <SafeAreaView edges={['left', 'right', 'bottom']} className="flex-1 bg-background">
+        <GlassNav title={t('common.loading')} />
         <View className="p-6 space-y-4">
           <Skeleton width="100%" height={60} borderRadius={16} />
           <Skeleton width="70%" height={80} borderRadius={16} />
@@ -67,12 +67,12 @@ export default function ChatScreen() {
     );
   }
 
-  if (isError || !conversation) {
+  if (!conversation) {
     return (
-      <SafeAreaView className="flex-1 bg-background justify-center px-6">
+      <SafeAreaView edges={['left', 'right', 'bottom']} className="flex-1 bg-background justify-center px-6">
         <ErrorState
-          title="No se pudo cargar la conversación"
-          message={error?.message || 'La conversación no existe o expiró.'}
+          title={t('chat.errorTitle')}
+          message={t('chat.errorDescription')}
           onRetry={() => refetch()}
         />
       </SafeAreaView>
@@ -80,14 +80,14 @@ export default function ChatScreen() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-background" testID="chat-screen">
+    <SafeAreaView edges={['left', 'right', 'bottom']} className="flex-1 bg-background" testID="chat-screen">
       {/* Header Fijo en Cristal Líquido */}
       <GlassNav
         title={counterpartName}
         leftAction={
           <Pressable onPress={() => router.back()} className="p-2">
             <Text variant="body" weight="bold" className="text-primary">
-              ← Volver
+              {t('common.back')}
             </Text>
           </Pressable>
         }
@@ -99,7 +99,7 @@ export default function ChatScreen() {
           <View className="flex-row items-center space-x-2 mt-0.5">
             <Badge variant="category" label={conversation.category_name} />
             {conversation.is_closed && (
-              <Badge variant="high" label="Chat Cerrado" />
+              <Badge variant="high" label={t('chat.closedLabel')} />
             )}
           </View>
         </View>
@@ -113,7 +113,7 @@ export default function ChatScreen() {
         {/* Banner de Trabajo / Solicitud */}
         <View className="bg-card/90 px-4 py-2 border-b border-border">
           <Text variant="caption" muted numberOfLines={1}>
-            📌 Pedido: {conversation.raw_prompt}
+            {t('chat.request', { prompt: conversation.raw_prompt })}
           </Text>
         </View>
 
@@ -162,14 +162,15 @@ export default function ChatScreen() {
           testID="chat-messages-list"
         />
 
+        {isError ? <Text variant="caption" accessibilityRole="alert">{t('chat.refreshError')}</Text> : null}
         {/* Banner Informativo / Anti-Contact Guard Error */}
         {guardError ? (
           <View className="bg-danger/15 border-t border-b border-danger/30 px-4 py-3" testID="anti-contact-error-banner">
             <Text variant="caption" weight="bold" className="text-danger">
-              ⚠️ {guardError}
+              {guardError}
             </Text>
             <Text variant="caption" className="text-danger/80 text-xs mt-1">
-              Podés editar el mensaje abajo para quitar los datos de contacto y reintentar.
+              {t('chat.retryHint')}
             </Text>
           </View>
         ) : null}
@@ -178,14 +179,14 @@ export default function ChatScreen() {
         {conversation.is_closed ? (
           <View className="p-4 bg-muted/40 border-t border-border items-center">
             <Text variant="caption" weight="semibold" className="text-muted-foreground text-center">
-              🔒 El chat ha sido cerrado porque el trabajo fue completado o cancelado.
+              {t('chat.closedDescription')}
             </Text>
           </View>
         ) : (
           <View className="p-3 bg-background/95 border-t border-border flex-row items-center space-x-2">
             <View className="flex-1">
               <Input
-                placeholder="Escribí un mensaje..."
+                placeholder={t('chat.placeholder')}
                 value={messageText}
                 onChangeText={(txt) => {
                   setMessageText(txt);
@@ -207,7 +208,7 @@ export default function ChatScreen() {
               disabled={sendMessageMutation.isPending || !messageText.trim()}
               testID="chat-send-button"
             >
-              Enviar
+              {t('chat.submit')}
             </GlassButton>
           </View>
         )}
