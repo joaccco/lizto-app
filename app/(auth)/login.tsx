@@ -10,6 +10,7 @@ import { authApi } from '@/features/auth/api/authApi';
 import { useAuthStore } from '@/features/auth/store/useAuthStore';
 import { loginError } from '@/features/auth/domain/loginError';
 import { GlassCard, GlassButton, Input, Text } from '@/components/ui';
+import { OAuthButtons } from '@/features/auth/components/OAuthButtons';
 
 export default function LoginScreen() {
   const { t } = useTranslation();
@@ -18,6 +19,7 @@ export default function LoginScreen() {
   const queryClient = useQueryClient();
   const [serverError, setServerError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [oauthBusy, setOAuthBusy] = useState(false);
   const submitting = useRef(false);
 
   const {
@@ -122,12 +124,14 @@ export default function LoginScreen() {
           size="lg"
           onPress={() => { handleSubmit(onSubmit)(); }}
           loading={loading}
+          disabled={oauthBusy}
           testID="login-submit-button"
         >
           {t('auth.loginButton')}
         </GlassButton>
       </GlassCard>
-      <GlassButton variant="outline" className="mt-6 mb-12" onPress={() => router.replace('/(cliente)')}>{t('auth.browse')}</GlassButton>
+      <OAuthButtons mode="login" lock={submitting} disabled={loading} onBusyChange={setOAuthBusy} />
+      <GlassButton variant="outline" disabled={loading || oauthBusy} className="mt-6 mb-12" onPress={() => router.replace('/(cliente)')}>{t('auth.browse')}</GlassButton>
     </ScrollView>
   );
 }

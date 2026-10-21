@@ -218,5 +218,24 @@
     "passwordNumber": "La contraseña debe contener al menos un número",
     "passwordConfirmation": "La confirmación de contraseña debe tener al menos 8 caracteres",
     "passwordMismatch": "Las contraseñas no coinciden"
+  },
+  "oauth": {
+    "signInTitle": "O ingresá con tu cuenta",
+    "linkTitle": "Vincular una cuenta para próximos ingresos",
+    "linkExplanation": "Tu sesión de Lizto sigue abierta. Autorizá Google o Facebook para vincularlos a esta misma cuenta y poder ingresar con ellos más adelante.",
+    "google": "Continuar con Google",
+    "facebook": "Continuar con Facebook",
+    "linkGoogle": "Vincular Google",
+    "googleLinked": "Google vinculado",
+    "facebookLinked": "Facebook vinculado",
+    "linkFacebook": "Vincular Facebook",
+    "linked": "Cuenta vinculada. Ya podés usarla para ingresar a Lizto.",
+    "linkRequired": "Ese email ya tiene una cuenta Lizto. Ingresá con tu contraseña y vinculá el proveedor desde Mi cuenta.",
+    "profileIncomplete": "El proveedor no compartió nombre y email suficientes. Ingresá a Lizto y vinculalo desde Mi cuenta.",
+    "identityConflict": "Esa cuenta ya está vinculada o ya tenés otra cuenta de este proveedor.",
+    "notConfigured": "Este proveedor todavía no está disponible. Usá tu email y contraseña.",
+    "unavailable": "No pudimos comunicarnos con el proveedor. Reintentá en unos minutos.",
+    "expired": "La autorización venció. Volvé a intentarlo.",
+    "failed": "No pudimos completar la autorización. Volvé a intentarlo."
   }
 }

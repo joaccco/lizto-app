@@ -79,3 +79,5 @@ LIZTO_LIVE_API_URL=http://127.0.0.1:8000/api/v1 npm run test:api
 La suite sólo admite loopback y mantiene los tokens en memoria. No reemplaza la comprobación nativa de Secure Store, navegación ni ejecución en Android/iPhone.
 
 Con Xcode 27 / iOS 27, `expo-build-properties` activa `ios.enableSceneSupport` en `app.config.ts`. Es necesario para que UIKit permita arrancar la app; después de modificar plugins hay que regenerar y recompilar el proyecto iOS. No basta recargar Metro.
+
+La integración OAuth nativa (Google/Facebook), el contrato implementado y los pasos de validación están detallados en [el contrato móvil](docs/OAUTH-MOBILE-CONTRATO.md). Copiar `.env.example` a `.env.local` y completar sólo la configuración del entorno. Ambos pares de credenciales deben estar completos o ausentes; no incluir secretos de servidor. Agregar o cambiar la configuración de los SDKs exige un nuevo build de desarrollo. El login y la vinculación desde Mi cuenta consumen las rutas reales de API; Google y Facebook tienen vinculación e ingreso confirmados por Mateo en iPhone; Apple y la validación nativa Android siguen pendientes.

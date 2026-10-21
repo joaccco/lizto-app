@@ -33,6 +33,7 @@ export const userSchema = z.object({
   status: z.string(),
   roles: z.array(z.string()),
   has_provider_profile: z.boolean(),
+  linked_oauth_providers: z.array(z.enum(['google', 'facebook'])).optional(),
   created_at: instantSchema.nullable().optional(),
 });
 

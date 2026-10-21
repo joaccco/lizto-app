@@ -168,3 +168,23 @@ Nuevo build con escenas: compilación e instalación física completadas (0 erro
 Mateo confirmó visualmente la pantalla de Lizto en su iPhone. El servidor registró consultas nativas a `/categories` y `/providers`. La cuenta local de integración se verificó con login HTTP 200 y cierre de esa sesión de verificación HTTP 200 (tokens sólo en memoria). Esta evidencia valida arranque/interfaz y conexión de catálogo en iPhone; no implica recorridos autenticados, rol profesional, Secure Store o Android ya verificados.
 
 Corrección visual en iPhone: `Text` enviaba `color: undefined` como estilo inline y anulaba el color de NativeWind cuando no había color explícito. Se evita agregar esa propiedad ausente; se conservan los colores explícitos y la prioridad de `style`. Metro recargó el build de desarrollo y Mateo confirmó que los textos se ven correctamente. TypeScript y 105 tests pasan. La suite Jest sustituye el runtime de NativeWind y no verifica este contraste nativo; la evidencia visual es la confirmación en dispositivo. Android sigue sin validación nativa. Sin endpoints nuevos, cambios API ni dependencias por esta corrección.
+
+### Continuación OAuth · 2026-10-20
+
+Mateo confirmó en iPhone ingreso, persistencia, logout, rechazo de contraseña incorrecta, cambio entre roles, preferencia por cuenta y recuperación al volver la conexión. Son comprobaciones manuales informadas por Mateo, no nuevas pruebas automatizadas. Android queda pendiente por falta de entorno disponible.
+
+Mateo pidió continuar con OAuth. Revisión de API local y remoto: ambos `db4f1e6`, sin rutas/configuración OAuth Google/Apple. [Requerimiento de integración OAuth](OAUTH-MOBILE-CONTRATO.md): responsables, límites, criterios de aceptación y configuración necesaria. Proveedores del primer bloque, política de vinculación y disponibilidad de configuración externa están consultados con Mateo, pendientes de respuesta. No se agregan endpoints ficticios ni SDKs/botones sin un flujo acordado.
+
+Mateo informa aprobación de Joaco para OAuth con Google, Facebook y Apple, confirma crear las tres configuraciones desde cero y exige ingreso previo/vinculación explícita ante cuenta existente con el mismo email. El [contrato OAuth](OAUTH-MOBILE-CONTRATO.md) registra estas decisiones; rutas y payloads de API todavía pendientes.
+
+Preparación móvil OAuth Google/Facebook: adaptadores nativos, validación y coordinación detrás de la interfaz `OAuthBackend`, sin transporte HTTP ficticio ni botones habilitados antes de la entrega API. Se agregan tres dependencias nativas justificadas en [el contrato OAuth](OAUTH-MOBILE-CONTRATO.md). Apple pendiente por decisión de Mateo (no tiene membresía paga). TypeScript, 123 tests en 20 suites y Doctor 21/21; build físico con SDKs en curso. Android continúa pendiente.
+
+Build físico OAuth preparatorio compilado, firmado, instalado y lanzado; Metro sirvió JavaScript. Esta evidencia valida que los SDKs conviven con el arranque actual, no un ingreso OAuth real. Contrato HTTP de API, vinculación y flujo completo siguen pendientes; ver límites y advertencias en el documento OAuth.
+
+### OAuth implementado · 2026-10-21
+
+Mateo autorizó excepcionalmente implementar y publicar el backend de Joaco. Se implementaron cuatro rutas reales de desafío, ingreso y vinculación Google/Facebook y su integración móvil. Este estado reemplaza las notas históricas de contrato pendiente anteriores; ver [contrato vigente](OAUTH-MOBILE-CONTRATO.md). API: 396 pruebas / 2084 aserciones; app: TypeScript, 128 pruebas y Doctor 21/21. Registro UUID y contraseña quedan incluidos en la entrega API. No implica despliegue remoto ni validación humana OAuth: faltan autorización real desde iPhone, configuración del ambiente compartido y Android. Apple pendiente de cuenta paga.
+
+### Validación OAuth iPhone · 2026-10-21
+
+Mateo confirmó vinculación e ingreso con Google y Facebook, recuperando la cuenta existente y ambos roles. El error de Facebook dentro de limited.facebook.com se resolvió al agregar email en los permisos del caso de uso Meta. La ampliación API 9766808 informa proveedores vinculados; la app conserva ese estado en TanStack Query, deshabilita el botón vinculado y oculta el aviso a los 30 segundos. TypeScript, 133 pruebas móviles y Doctor 21/21 pasan. Mateo confirmó cancelación/reintento real en ambos proveedores; Android, Apple y ambiente compartido siguen abiertos. Esta actualización reemplaza las notas históricas de OAuth pendiente, sin declarar cerrada la etapa 1.

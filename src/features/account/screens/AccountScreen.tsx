@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
@@ -8,6 +8,7 @@ import { Text, GlassButton, ErrorState } from '@/components/ui';
 import { useMe } from '@/features/auth/api/useMe';
 import { authApi } from '@/features/auth/api/authApi';
 import { useAuthStore } from '@/features/auth/store/useAuthStore';
+import { OAuthButtons } from '@/features/auth/components/OAuthButtons';
 
 export default function AccountScreen() {
   const { t } = useTranslation();
@@ -16,14 +17,18 @@ export default function AccountScreen() {
   const queryClient = useQueryClient();
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
+  const lock = useRef(false);
+  const [oauthBusy, setOAuthBusy] = useState(false);
   const signOut = async () => {
+    if (lock.current) return;
+    lock.current = true;
     setBusy(true); setFailed(false);
     try {
       try { await authApi.logout(); } catch { setFailed(true); }
       await logout();
       queryClient.clear();
     } catch { setFailed(true); }
-    finally { setBusy(false); }
+    finally { lock.current = false; setBusy(false); }
   };
   return <Screen title={t('account.title')} subtitle={t('account.description')}>
     {!token ? <SignInPrompt /> : query.isPending ? <ActivityIndicator color="#7C5CFF" accessibilityLabel={t('common.loading')} /> : query.isError ?
@@ -33,8 +38,9 @@ export default function AccountScreen() {
           <Text muted>{query.data.email}</Text>
           {query.data.phone ? <Text muted>{query.data.phone}</Text> : null}
         </View>
+        <OAuthButtons mode="link" lock={lock} disabled={busy} onBusyChange={setOAuthBusy} />
       </> : null}
     {failed ? <Text color="#FF5A5A">{t('account.actionError')}</Text> : null}
-    {token ? <GlassButton variant="danger" loading={busy} onPress={() => void signOut()}>{t('common.logout')}</GlassButton> : null}
+    {token ? <GlassButton variant="danger" loading={busy} disabled={oauthBusy} onPress={() => void signOut()}>{t('common.logout')}</GlassButton> : null}
   </Screen>;
 }
