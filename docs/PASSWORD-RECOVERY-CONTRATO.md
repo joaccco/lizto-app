@@ -1,0 +1,43 @@
+# Recuperación de contraseña — contrato vigente
+
+Implementado el 2026-10-21. Mateo eligió bandeja local y luego confirmó funcionamiento del primer recorrido en iPhone. Solicitó cambiar a seis dígitos y verificar el código antes de mostrar nueva contraseña; este documento reemplaza el contrato inicial de ocho dígitos y envío conjunto. Mateo también confirmó en iPhone la separación visual, espera de reenvío e ingreso automático. Entrega de app/API validada; la versión publicada se identifica en el historial de cada repositorio.
+
+## Recorrido y endpoints
+
+Base `/api/v1`, POST JSON público, sin Bearer:
+
+1. `/auth/forgot-password`: `{email}`. HTTP 202 `{message,data:{retry_at}}` genérico, tanto para cuenta existente como ausente. retry_at es el instante UTC del próximo pedido permitido. La repetición durante esa espera o al agotar la ventana devuelve 429 con code=password_recovery_throttled y el mismo retry_at; no envía correo. Envía código de **seis dígitos** como string para conservar ceros iniciales. No devuelve el código por HTTP.
+2. `/auth/verify-password-code`: `{email,code}`. Sólo un código correcto, vigente y con intentos disponibles devuelve HTTP 200 `{data:{reset_token,expires_at}}`. reset_token es una prueba aleatoria de 64 caracteres hexadecimales, ligada al email y a este cambio; no es una sesión Lizto. expires_at tiene offset UTC explícito. La verificación consume el código para que no vuelva a verificarse. No cambia contraseña ni revoca sesiones todavía.
+3. `/auth/reset-password`: `{email,reset_token,password,password_confirmation}`. HTTP 200 `{data:{user,token},message}`, con una nueva sesión Sanctum emitida en la transacción. Exige permiso verificado, vigente y no usado; enviar directamente el código de seis dígitos no permite cambiar contraseña. Actualiza contraseña, revoca todas las sesiones anteriores, consume el permiso y crea la nueva sesión en la misma transacción. La app valida el envelope habitual de login y guarda el token únicamente mediante Secure Store; el layout raíz resuelve el rol. No se vuelven a pedir email/contraseña ni se realiza una segunda llamada a /auth/login. Si Secure Store falla no se declara ingreso exitoso ni se vuelve a ejecutar un cambio ya consumido. Conserva UUID, roles e identidades OAuth.
+
+Nueva contraseña: mínimo ocho caracteres, mayúscula ASCII, número ASCII y confirmación idéntica. App reutiliza newPasswordSchema de registro. Respuestas y formularios pasan por Zod; HTTP y resultado de verificación pertenecen a TanStack Query. El permiso sólo existe en memoria de la mutación, se descarta al terminar, reiniciar el recorrido o desmontar, y no se copia a Zustand ni almacenamiento persistente. El formulario de contraseña sólo se monta después de la respuesta verificada de API. No hay códigos en URLs.
+
+Errores: campos inválidos 422; código/permiso inválido, agotado, vencido o reutilizado 422 con `code=password_recovery_invalid`; límite por IP 429; transporte no configurado/disponible 503 con `code=password_recovery_unavailable`. La UI distingue error de código y verificación vencida, conserva entradas ante fallos y no imprime mensajes SMTP arbitrarios.
+
+## Seguridad
+
+Código generado criptográficamente y almacenado sólo como hash bcrypt. Permiso de 256 bits guardado sólo como SHA-256. Bloqueos de fila serializan solicitud, verificación y cambio por usuario. Una tabla independiente conserva el límite de pedidos por email, identificándolo por HMAC con APP_KEY, sin crear cuentas ni desafíos para direcciones inexistentes. Ese límite no se elude cambiando IP, volviendo atrás ni reabriendo la app. El contador de intentos incorrectos **se conserva entre reenvíos**; pedir otro código no reinicia el presupuesto. Un reenvío habilitado invalida el permiso anterior y reemplaza el código, garantizando que no repita el previo. Cuentas suspendidas/eliminadas no se reactivan ni reciben nuevos códigos.
+
+Configuración de servidor: PASSWORD_RECOVERY_REQUEST_WINDOW_SECONDS=3600 (mínimo 60), PASSWORD_RECOVERY_MAX_REQUESTS=5, PASSWORD_RECOVERY_TTL_SECONDS=600 (acotado 60–3600), PASSWORD_RECOVERY_RESEND_SECONDS=60, PASSWORD_RECOVERY_MAX_ATTEMPTS=5, PASSWORD_RECOVERY_ATTEMPT_WINDOW_SECONDS=3600 (mínimo 60), PASSWORD_RECOVERY_VERIFIED_TTL_SECONDS=300 (acotado 30–600). El permiso no extiende el vencimiento original del código. Entre pedidos se espera por defecto un minuto; tras el quinto pedido se espera hasta terminar la ventana de una hora. Tanto el plazo como el máximo vienen del servidor. El presupuesto de códigos incorrectos es independiente; al agotarlo no se emite otro código hasta terminar su ventana. Los códigos de ocho dígitos del contrato inicial quedan obsoletos.
+
+Los tres cuerpos HTTP se excluyen del logging estructurado. No se registran excepciones SMTP con posibles credenciales. Fuera de tests se rechazan log/array y transports no habilitados explícitamente, incluyendo failover con posible fallback a logs. Fallo SMTP invalida el código emitido y se devuelve error visible. No se afirma resistencia a toda medición de tiempos o a enumeración durante una indisponibilidad parcial de SMTP.
+
+Instantes persistidos como UTC con offset explícito para evitar el desfase de tres horas de PostgreSQL local. `password-recovery:prune` limpia cada hora filas vencidas sólo después de terminar también la ventana de intentos, para no restablecer límites prematuramente. Los vencimientos se controlan aunque scheduler no corra.
+
+## Bandeja local y operación
+
+Mailpit v1.31.6, binario oficial de axllent/mailpit con SHA-256 contrastado con metadata de release. Instalado en `/tmp/lizto-stage1/mailpit`, sin servicio automático ni dependencia de aplicación. UI de la Mac: `http://127.0.0.1:8025`. SMTP: `127.0.0.1:1025`. Ambos escuchan sólo en loopback; sin relay ni correo a Internet. El iPhone consume la API por LAN y no se conecta directamente a la bandeja.
+
+Inicio: `/tmp/lizto-stage1/mailpit/mailpit --listen 127.0.0.1:8025 --smtp 127.0.0.1:1025 --database /tmp/lizto-stage1/mailpit/messages.db --disable-version-check`.
+
+Configuración local: MAIL_MAILER=smtp, MAIL_HOST=127.0.0.1, MAIL_PORT=1025, sin usuario/contraseña, MAIL_SCHEME vacío, remitente no-reply@lizto.test. API local 8001; wrapper y secretos fuera de Git. Para otro ambiente aplicar las migraciones 010000, 020000 y 030000 de recuperación, configurar SMTP/remitente verificado/TLS y MAIL_TIMEOUT (10 segundos), cache persistente para límites por IP y scheduler. El entorno local usa cache array: los límites por email/código sí son persistentes en DB, pero los límites por IP entre peticiones necesitan cache compartida fuera de este entorno.
+
+## Presentación y evidencia
+
+La separación de controles se aplica en un View interno a GlassCard: el wrapper interno de la tarjeta impedía que el gap externo separara sus hijos. La espera se conserva en TanStack Query por email a partir del retry_at validado, también cuando la API rechaza un pedido. El contador se calcula con instantes absolutos; actualiza sólo la UI, se detiene al vencer y mientras la app está en segundo plano, y no consulta periódicamente la API. Volver al formulario conserva email y espera; el servidor sigue controlando el límite aunque no haya caché del dispositivo.
+
+TypeScript, 148 pruebas móviles / 22 suites y Expo Doctor 21/21 pasan; se mantienen las 133 previas a recuperación. Se cubren verificación antes de mostrar contraseña, contrato inválido, permiso vencido, duplicación, bloqueo hasta retry_at, conservación entre pantallas, error 429, inicio de sesión únicamente con token válido y fallo de Secure Store sin repetir un cambio consumido. Suite completa API: 413 pruebas / 2236 aserciones; incluye límites persistentes entre IP, máximo de pedidos por ventana y sesión automática sin reactivar cuentas suspendidas.
+
+Integración real SMTP/API aprobada: correo de seis dígitos en Mailpit, verificación separada, permiso obligatorio, rechazo de pedido inmediato con 429/retry_at, nueva sesión válida para /auth/me, sesión previa revocada y permiso reutilizado rechazado. No se imprimieron códigos ni credenciales.
+
+Mateo confirmó manualmente en iPhone el recorrido inicial, luego seis dígitos/verificación previa y finalmente separación visual, cuenta regresiva y entrada automática a su cuenta. Android, correo externo y ambiente compartido pendientes. Sin dependencias nuevas de app/API; Mailpit es herramienta externa local. Persiste el defecto previo de privacidad de domicilios, fuera de esta entrega. La ampliación backend se realiza dentro de la coordinación excepcional de recuperación de esta conversación. El historial de Git identifica la publicación de esta entrega.

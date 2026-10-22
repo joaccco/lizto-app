@@ -237,5 +237,28 @@
     "unavailable": "No pudimos comunicarnos con el proveedor. Reintentá en unos minutos.",
     "expired": "La autorización venció. Volvé a intentarlo.",
     "failed": "No pudimos completar la autorización. Volvé a intentarlo."
+  },
+  "recovery": {
+    "title": "Recuperá tu contraseña",
+    "description": "Ingresá el email de tu cuenta para recibir un código de recuperación.",
+    "codeDescription": "Si existe una cuenta para ese email, recibirás un código. Revisá tu correo e ingresalo para verificar tu solicitud.",
+    "sendCode": "Enviar código",
+    "codeLabel": "Código de 6 dígitos",
+    "invalidCodeFormat": "Ingresá el código de 6 dígitos del correo.",
+    "newPassword": "Nueva contraseña",
+    "confirmPassword": "Confirmá la contraseña",
+    "passwordHint": "Usá al menos 8 caracteres, una mayúscula y un número.",
+    "changePassword": "Cambiar contraseña",
+    "requestAnother": "Solicitar otro código o cambiar email",
+    "backToLogin": "Volver a iniciar sesión",
+    "successTitle": "Contraseña actualizada",
+    "successDescription": "Tu contraseña se actualizó. Estamos ingresando a tu cuenta.",
+    "invalidCode": "El código no es válido o venció. Revisalo o solicitá uno nuevo.",
+    "unavailable": "No pudimos procesar la solicitud. Revisá tu conexión e intentá nuevamente.",
+    "forgotPassword": "Olvidé mi contraseña",
+    "passwordDescription": "Código verificado. Ahora elegí una nueva contraseña para tu cuenta.",
+    "verifyCode": "Verificar código",
+    "verificationExpired": "La verificación venció o ya se utilizó. Solicitá otro código para continuar.",
+    "resendWait": "Podés pedir otro código en {{time}}."
   }
 }

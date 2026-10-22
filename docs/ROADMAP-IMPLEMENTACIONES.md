@@ -93,6 +93,8 @@ Entrega iniciada el 2026-10-11: [alcance, contratos revisados y requerimientos d
 
 ## Etapa 4 — Acceso y habilitación profesional
 
+Recuperación (2026-10-21): app/API implementadas y SMTP local validado mediante Mailpit; ver [contrato](PASSWORD-RECOVERY-CONTRATO.md). Mateo confirmó en iPhone código de seis dígitos, verificación previa, espera de reenvío e ingreso automático. Correo externo y Android siguen pendientes.
+
 Avance OAuth (2026-10-21): Google y Facebook cuentan con contrato implementado en API `7b16507` e integración React Native de ingreso/vinculación. Ver [contrato y evidencia](OAUTH-MOBILE-CONTRATO.md). La autorización completa con proveedor en dispositivo sigue pendiente; Apple requiere membresía paga. Esto no completa recuperación de contraseña, verificación de correo ni habilitación profesional.
 
 **Implementaciones:** acceso en React Native con soporte de API: Google, recuperación y verificación de correo con vinculación segura; registro y onboarding; perfil, rubros, horarios y disponibilidad; Didit con inicio, retorno a la app, estado y recuperación de errores; webhook real en Sandbox. Verificar los contratos y la configuración nativa antes de implementar cada integración.

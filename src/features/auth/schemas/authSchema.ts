@@ -8,13 +8,15 @@ export const loginSchema = z.object({
 
 export type LoginFormData = z.infer<typeof loginSchema>;
 
+export const newPasswordSchema = z.string().min(8, 'validation.passwordRegister')
+  .regex(/[A-Z]/, 'validation.passwordUppercase')
+  .regex(/[0-9]/, 'validation.passwordNumber');
+
 export const registerSchema = z.object({
   name: z.string().trim().min(1, 'validation.name')
     .refine(value => [...value].length <= 255, 'validation.nameMax'),
   email: z.string().trim().email('validation.email'),
-  password: z.string().min(8, 'validation.passwordRegister')
-    .regex(/[A-Z]/, 'validation.passwordUppercase')
-    .regex(/[0-9]/, 'validation.passwordNumber'),
+  password: newPasswordSchema,
   password_confirmation: z.string().min(8, 'validation.passwordConfirmation'),
   phone: z.string().refine(value => [...value].length <= 50, 'validation.phoneMax').nullable().optional(),
 }).refine((data) => data.password === data.password_confirmation, {
