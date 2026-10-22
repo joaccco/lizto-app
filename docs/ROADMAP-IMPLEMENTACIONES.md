@@ -93,6 +93,8 @@ Entrega iniciada el 2026-10-11: [alcance, contratos revisados y requerimientos d
 
 ## Etapa 4 — Acceso y habilitación profesional
 
+Registro nativo (2026-10-21): formulario de alta e ingreso automático implementados sobre la API existente. [Evidencia y alcance](REGISTRO-MOBILE.md); Mateo confirmó alta e ingreso automático en iPhone. Sin habilitación profesional ni verificación de email incluidas.
+
 Recuperación (2026-10-21): app/API implementadas y SMTP local validado mediante Mailpit; ver [contrato](PASSWORD-RECOVERY-CONTRATO.md). Mateo confirmó en iPhone código de seis dígitos, verificación previa, espera de reenvío e ingreso automático. Correo externo y Android siguen pendientes.
 
 Avance OAuth (2026-10-21): Google y Facebook cuentan con contrato implementado en API `7b16507` e integración React Native de ingreso/vinculación. Ver [contrato y evidencia](OAUTH-MOBILE-CONTRATO.md). La autorización completa con proveedor en dispositivo sigue pendiente; Apple requiere membresía paga. Esto no completa recuperación de contraseña, verificación de correo ni habilitación profesional.

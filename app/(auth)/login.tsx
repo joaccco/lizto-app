@@ -131,6 +131,7 @@ export default function LoginScreen() {
         </GlassButton>
       </GlassCard>
       <GlassButton variant="outline" className="mt-4" disabled={loading || oauthBusy} onPress={() => router.push('/(auth)/recover-password')}>{t('recovery.forgotPassword')}</GlassButton>
+      <GlassButton variant="outline" className="mt-4" disabled={loading || oauthBusy} onPress={() => router.push('/(auth)/register')}>{t('registration.submit')}</GlassButton>
       <OAuthButtons mode="login" lock={submitting} disabled={loading} onBusyChange={setOAuthBusy} />
       <GlassButton variant="outline" disabled={loading || oauthBusy} className="mt-6 mb-12" onPress={() => router.replace('/(cliente)')}>{t('auth.browse')}</GlassButton>
     </ScrollView>

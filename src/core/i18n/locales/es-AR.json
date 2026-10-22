@@ -260,5 +260,22 @@
     "verifyCode": "Verificar código",
     "verificationExpired": "La verificación venció o ya se utilizó. Solicitá otro código para continuar.",
     "resendWait": "Podés pedir otro código en {{time}}."
+  },
+  "registration": {
+    "title": "Creá tu cuenta",
+    "description": "Ingresá tus datos para crear tu cuenta de Lizto.",
+    "name": "Nombre",
+    "email": "Correo electrónico",
+    "password": "Contraseña",
+    "password_confirmation": "Confirmá la contraseña",
+    "submit": "Crear cuenta",
+    "backToLogin": "Ya tengo cuenta: iniciar sesión",
+    "emailUnavailable": "Ese email ya está registrado o no es válido. Podés iniciar sesión o probar con otro.",
+    "validationFailed": "Revisá los datos indicados e intentá nuevamente.",
+    "failed": "No pudimos crear tu cuenta. Revisá tu conexión e intentá nuevamente.",
+    "created": "Tu cuenta se creó correctamente.",
+    "createdSessionFailed": "Tu cuenta ya se creó, pero no pudimos guardar el acceso en el dispositivo. Reintentá el ingreso o iniciá sesión.",
+    "retrySession": "Reintentar ingreso",
+    "nativeRequired": "Creá tu cuenta desde la app de Android o iOS para guardar el acceso de forma segura."
   }
 }
