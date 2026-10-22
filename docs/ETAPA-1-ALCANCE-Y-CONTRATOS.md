@@ -1,16 +1,16 @@
 # Etapa 1 — Alcance, contratos y próximas entregas móviles
 
-> **Status:** Alineación revisada; contratos de backend por coordinar y validación nativa en curso · **Owner:** Mateo (app e integración), Joaco (API/web) · **Última revisión:** 2026-10-20 · **Fuente de verdad:** Decisiones acordadas y evidencia referenciada; el comportamiento vigente se comprueba en código.
+> **Status:** Alcance y decisiones principales alineados; contratos B1–B8 por coordinar. M1/M2 implementadas y probadas en iPhone; M3 validada en iPhone y pendiente de Android/staging · **Owner:** Mateo (app e integración), Joaco (API/web) · **Última revisión:** 2026-10-21 · **Fuente de verdad:** Decisiones acordadas y evidencia referenciada; el comportamiento vigente se comprueba en código.
 
-> **En 30 segundos.** Primera beta: cliente y profesional, Agenda y Urgencia, Android e iOS. Roles y sesión están implementados; acceso alineado con API y probado automáticamente. El inventario se revisó contra la API actual y Trello. La etapa no equivale a construir onboarding, Agenda o Urgencia: deja sus contratos, responsables y dependencias explícitos. El build iOS y la API local se preparan en esta ronda; no hay staging compartido confirmado ni validación Android.
+> **En 30 segundos.** Primera beta: cliente y profesional, Agenda y Urgencia, Android e iOS. En iPhone se probaron roles/sesión, acceso, registro, Google/Facebook y recuperación; también se validaron contratos contra la API local. M3 sigue abierta por Android y staging compartido. OpenJDK 17 ya está disponible en Homebrew; faltan plataforma Android, herramientas del SDK, emulador y aceptación humana de licencias. Etapa 1 deja dependencias y contratos explícitos; no equivale a construir onboarding, Agenda o Urgencia.
 
 ## Evidencia y límites
 
-- API: `db4f1e6`, comprobado con pull el 2026-10-20; modificación local autorizada en `RegisterRequest.php` (contraseña de 8 caracteres) y sus pruebas, sin publicar. Lectura de rutas, controladores, recursos, políticas y modelos; no asumir que una política declarada se ejecuta en cada controlador.
+- API: `2f69793` (main, recuperación de contraseña), con OAuth en `9766808`/`7b16507` y correcciones previas de registro/contraseña. Revisado el código local de rutas, controladores, recursos, políticas y modelos. La revisión de contratos no implica que exista despliegue compartido.
 - Engineering: `0258aa5`, actualizado el 2026-10-20. [Reglas](../../lizto-engineering/01-product/business-rules.md), [decisiones](../../lizto-engineering/05-decisions/README.md), [plan de Urgencia](../../lizto-engineering/09-roadmap/urgencia-con-oferta.md). Los acuerdos posteriores de Mateo de esta conversación se sincronizan con esa guía; no implican implementación API.
-- [Trello](https://trello.com/b/C8KEjcAM/lizto-development): consulta del 2026-10-20, 14 listas y 180 tarjetas abiertas, con paginación agotada. Tarjetas y listas son referencias de coordinación, no prueba de ejecución. Actualizaciones de esta ronda se registran al final.
-- App: se preservan modificaciones locales anteriores, sin commit/push en esta ronda. La web `../lizto` sigue como referencia funcional; no sustituye pruebas React Native.
-- Resultados previos comprobados: TypeScript y 98 tests, 9 pruebas PHP de contraseñas, bundles Android/iOS y Expo Doctor 21/21. Los resultados de esta ronda se registran al final; no convertir exportación en ejecución nativa.
+- [Trello](https://trello.com/b/C8KEjcAM/lizto-development): consulta de tarjetas relevantes el 2026-10-21. B1, B2 y B4 continúan en «Esperando una decisión»; M3 sigue «En curso» con descripción desactualizada al 2026-10-20. No se modificaron tarjetas. Los estados del tablero no sustituyen evidencia de ejecución.
+- App: último commit publicado `e912a29` (2026-10-21); los cambios locales actuales son sólo esta actualización documental. La web `../lizto` sigue como referencia funcional; no sustituye pruebas React Native.
+- Resultados de entregas anteriores: cada suite y validación se documenta en su registro fechado más abajo; no convertir exportación en ejecución nativa.
 - [Historial hasta esta consolidación](historial/ETAPA-1-HISTORIAL-HASTA-2026-10-20.md): conserva las decisiones anteriores, incluidos anillos y esperas por grupo posteriormente reemplazados. Este documento contiene el estado vigente.
 
 ## Alcance y decisiones vigentes
@@ -87,11 +87,11 @@ No se encontró lectura de ofertas/preguntas por solicitud en las rutas actuales
 
 ### B3 · Consentimiento y rechazo — bloquea adjudicación de Agenda
 
-La confirmación directa todavía inventa precio y acepta la oferta; debe quedar impedida para Agenda. Aceptación: sólo el cliente adjudica una oferta acordada; reintentos/concurrencia no duplican trabajos y no hay monto de reserva inventado. **Rechazo individual corregido estáticamente en API actual**; falta validarlo en integración y adaptar mobile en su propia entrega. No se declara cerrado el bloqueante completo.
+En API local `2f69793`, `ProviderDashboardController::confirmWorkRequest` crea una oferta con `proposed_price` por defecto de ARS 15.000 y llama `acceptOfferAction` desde la acción del profesional. No satisface la decisión de que el cliente acepte el precio antes de adjudicar. Aceptación: sólo el cliente adjudica una oferta acordada; reintentos/concurrencia no duplican trabajos y no hay monto de reserva inventado. **Rechazo individual corregido estáticamente en API actual**; falta validarlo en integración y adaptar mobile en su propia entrega. No se declara cerrado el bloqueante completo.
 
 ### B4 · Lectura y privacidad — bloquea detalle seguro y negociación
 
-`show` no aplica Gate y crea conversación si falta. Counter/reject/askQuestion ya aplican políticas; answer valida participación explícitamente. Falta comprobar y cubrir todas las rutas con pruebas de autorización adecuadas.
+Revisado en API local `2f69793`: `ServiceRequestController::show` no aplica Gate `view` y crea conversación con `firstOrCreate` durante un GET cuando ya hay un trabajo pero aún no tiene conversación. `LocationPresenter::canViewExact` devuelve `true` al cliente propietario antes de confirmar; para otros actores exige trabajo confirmado. Su presentación aproximada fabrica coordenadas de centroides por zona y radio fijo de 500 m. Counter/reject/askQuestion aplican políticas; answer valida participación explícitamente. Falta comprobar y cubrir las rutas de lectura con pruebas de autorización adecuadas.
 
 Aceptación: ajenos no leen solicitud; propietario/profesional elegible tienen acceso definido antes de adjudicar; GET no crea recursos; conversación nace de la acción de negocio. API no envía domicilio/coordenadas exactos a ningún rol antes de trabajo confirmado, según decisión de Mateo. Eliminar datos fabricados de `LocationPresenter`, duración 60, bio/experiencia/precios de reserva del detalle; campos ausentes se exponen como ausentes. No afirmar explotación en vivo por lectura estática.
 
@@ -109,25 +109,25 @@ Acordar paginación/cursor con orden estable y señal de continuidad. Aceptació
 
 ### B8 · Configuración y otras funciones — dividir por entrega
 
-Configuración de negocio/Urgencia: falta lectura autorizada de parámetros, plazos y versión, sin radios/tiempos quemados en app. Google/recuperación/verificación, pagos y disputa: sin rutas en el archivo inspeccionado, revisión específica antes de cada entrega. Dispositivos push **sí tienen rutas**; no confundir registro de token con feed de notificaciones ni entrega APNs comprobada.
+Configuración de negocio/Urgencia: falta lectura autorizada de parámetros, plazos y versión, sin radios/tiempos quemados en app. Google/Facebook y recuperación ya tienen contrato e integración implementados; faltan Apple (membresía paga), verificación de email, correo externo, pagos y disputa. Dispositivos push **sí tienen rutas**; no confundir registro de token con feed de notificaciones ni entrega APNs comprobada.
 
-OAuth depende de política de vinculación segura y credenciales por plataforma; facturación del contador. Siguen pendientes propios y no bloquean M1/M2 ni compilación local. Nuevos contratos de Urgencia requieren reglas de exclusividad, expiración, pausa/reanudación y consentimiento ya descritas arriba.
+Los contratos de Urgencia deben cubrir exclusividad, expiración, pausa/reanudación y consentimiento, además de lectura de configuración. El contador por oportunidad adjudicada requiere confirmación contractual antes de integrar cobros. Push y ubicación tienen rutas, pero eso no acredita feed persistido ni entrega APNs.
 
 ## Entregas y responsables
 
-- **M1 — HECHO en código, pendiente de aceptación nativa:** selección central, preferencia por cuenta, cambio rápido y caché aislada. Mateo. Sin APIs nuevas.
-- **M2 — HECHO en código, contratos locales verificados:** contraseñas y límites de nombre/teléfono alineados; login distingue 401/422/403/429/5xx, conserva datos y evita doble envío. Mateo; API de contraseñas modificada sólo por autorización puntual. Pantalla de registro fuera de esta entrega.
-- **M3 — EN CURSO:** preparar API local y build iOS de Lizto, porque Mateo tiene iPhone y Xcode. No existe ambiente compartido confirmado. Validar login, catálogo/listas, persistencia y borrado real de Secure Store, cambio de vista/cuenta y errores. Android sigue pendiente de JDK/SDK y prueba nativa; iOS no lo reemplaza. Distribución al iPhone físico requiere firma/dispositivo y consentimiento del usuario en Xcode, sin solicitar sus credenciales por chat.
-- **M4 — PENDIENTE:** onboarding/perfil/Didit, depende de B1 y configuración externa. Mateo integra, Joaco entrega contrato API.
+- **M1 — IMPLEMENTADA Y ACEPTADA EN IPHONE:** selección central, preferencia por cuenta, cambio rápido y caché aislada. Mateo confirmó el cambio de rol y su persistencia por cuenta.
+- **M2 — IMPLEMENTADA Y ACEPTADA EN IPHONE:** login, registro nativo y recuperación con verificación separada, cooldown e ingreso automático. Google y Facebook permiten vincular/ingresar, conservan el estado y cancelar no inicia sesión. Ver [registro](REGISTRO-MOBILE.md), [OAuth](OAUTH-MOBILE-CONTRATO.md) y [recuperación](PASSWORD-RECOVERY-CONTRATO.md). Registro y OAuth ya no están fuera de alcance. Apple sigue pendiente de membresía paga; verificación de email y entrega de correo externo siguen pendientes.
+- **M3 — IPHONE VALIDADO; ANDROID/STAGING PENDIENTES:** el build de desarrollo está instalado y corre en el iPhone contra API local; Mateo confirmó login, catálogo, persistencia/logout, cambio de vista, errores, alta, OAuth y recuperación. No hay staging compartido. OpenJDK 17 está instalado, pero faltan plataforma/herramientas SDK, emulador y aceptación humana de licencias; Android sigue sin build/ejecución nativa.
+- **M4 — BLOQUEADA POR B1/CONFIGURACIÓN DIDIT:** onboarding/perfil/Didit. El contrato B1 permanece en «Esperando una decisión» de Trello; el flujo canónico y autoridad de habilitación deben acordarse antes de integrar. La tarjeta de Sandbox también sigue como bloqueante de lanzamiento en Trello.
 - **M5 — PENDIENTE:** solicitud Agenda y negociación recuperable, depende de B2–B5. No se construye como parte del cierre documental de etapa 1.
 
 ## Cierre de etapa y qué continúa después
 
 La alineación puede cerrarse cuando el inventario y decisiones estén sincronizados, las tareas próximas tengan dueño/aceptación y el equipo acuerde cómo resolver los contratos que las bloquean. No exige implementar todos los B1–B8 ni el producto completo; tampoco permite declararlos disponibles por una propuesta escrita.
 
-Pendiente de coordinación humana: ratificar con Joaco los contratos B1–B8 según la próxima entrega; vinculación Google, contador, límites iniciales de configuración y otros pendientes bloquean sólo su función. La actualización documental registra decisiones ya tomadas por Mateo, sin inventar aprobación de Joaco.
+Pendiente de coordinación humana: acordar con Joaco los contratos B1–B8 por orden de dependencia. En Trello B1/B2/B4 están esperando decisión. Las integraciones Google/Facebook y recuperación ya están implementadas y probadas; Apple depende de membresía paga, verificación de email y correo real siguen pendientes. M3 aún requiere Android y staging.
 
-Para considerar terminadas las entregas móviles implementadas falta su validación nativa exigida por AGENTS. Las pruebas controladas y los bundles no la sustituyen. No hay staging creado, aplicación publicada, modificación de web ni mensaje enviado al compañero en esta ronda.
+La validación nativa de iPhone está documentada por flujo; Android y staging siguen pendientes y son necesarios para el alcance acordado de beta. No se declara cerrada la etapa 1 ni la épica mobile. No se modificaron API, web ni tarjetas de Trello en esta ronda.
 
 ## Registro de esta ronda · 2026-10-20
 
@@ -141,11 +141,19 @@ Para considerar terminadas las entregas móviles implementadas falta su validaci
 - API: 20 pruebas y 41 aserciones pasan (`AuthTest` y `PasswordPolicyTest`), usando exclusivamente `lizto_stage1_test` en PostgreSQL local, puerto 55432. Integración móvil real: 5 pruebas pasan (registro, health, catálogo, login/perfil/solicitudes/logout y errores de validación). `npm run test:api` requiere `LIZTO_LIVE_API_URL` de loopback; no usa mocks ni escribe tokens en archivos.
 
 
-### Coordinación en Trello realizada
+### Estado de coordinación al 2026-10-20 · histórico
+
+## Registro de estado verificado · 2026-10-21
+
+- App `e912a29` publicada en `main`; API `2f69793` publicada en `main`. Registro, recuperación y OAuth Google/Facebook tienen evidencia de integración contra API local; Mateo confirmó manualmente los recorridos en iPhone. No implica staging ni Android.
+- Mateo confirmó en iPhone alta e ingreso automático, vinculación/ingreso/cancelación y reintento con Google/Facebook, y recuperación con seis dígitos, verificación previa, cooldown e ingreso automático.
+- Trello consultado: [B1](https://trello.com/c/zNTaqGB1) («Esperando una decisión»), [B2](https://trello.com/c/8DbSZx1T) y [B4](https://trello.com/c/SsKY4QBV) («Esperando una decisión»); [M3](https://trello.com/c/Wg5el1Sq) («En curso»), cuya descripción conserva evidencia anterior al login y registro en iPhone. No se actualizaron tarjetas.
+- Entorno Android de esta Mac: OpenJDK 17 está instalado en Homebrew; sus binarios aún requieren `JAVA_HOME` explícito para los comandos de build. Las herramientas CLI oficiales están en `/tmp/lizto-android-sdk` y el Android CLI actual en `/tmp/lizto-android-home`; faltan plataforma/build-tools, `platform-tools`, emulador e imagen. La instalación de paquetes requiere aceptar las licencias oficiales de Android; no se aceptaron automáticamente. No hay dispositivo Android confirmado.
+- Prioridad siguiente según dependencias: resolver el contrato B4 de privacidad/autorización con Joaco y documentar su corrección en API; luego B3/B5 de consentimiento, estados e importes y B2 de negociación recuperable antes de M5. M4 no debe avanzar hasta acuerdo B1 y desbloqueo de configuración Didit/Sandbox. M3 Android puede prepararse en paralelo.
 
 - [Épica móvil](https://trello.com/c/Yx9AvObY): alcance cliente/profesional, Android/iOS y Agenda/Urgencia, entregas separadas.
-- [M1 roles/sesión](https://trello.com/c/uHZ7zaRe) y [M2 acceso](https://trello.com/c/b8pxAoHF): en revisión, sin marcar Completado.
-- [M3 nativo/API real](https://trello.com/c/Wg5el1Sq): en curso; build físico iOS instalado, pantalla y catálogo confirmados por Mateo. Recorridos autenticados, Secure Store y Android pendientes.
+- [M1 roles/sesión](https://trello.com/c/uHZ7zaRe) y [M2 acceso](https://trello.com/c/b8pxAoHF): estaban en revisión según la consulta del 2026-10-20.
+- [M3 nativo/API real](https://trello.com/c/Wg5el1Sq): estaba en curso; el estado posterior está registrado arriba.
 - Contratos por acordar: [B1 habilitación](https://trello.com/c/zNTaqGB1), [B2 lectura de ofertas](https://trello.com/c/8DbSZx1T) y [B4 lectura/privacidad](https://trello.com/c/SsKY4QBV). Responsables API/app documentados en descripción, sin atribuir aceptación del contrato a Joaco.
 - Aclaradas las tarjetas de [acceso API/web](https://trello.com/c/RIMKuvPH), [autoadjudicación](https://trello.com/c/vvRtQt0K), [respaldo/rating](https://trello.com/c/f2YNBmxH), [Flutter histórico](https://trello.com/c/XbpEmmJL) y [suscripciones no vigentes](https://trello.com/c/hPmS8Fvb). Se conservaron sus referencias históricas y no se cerraron por inferencia.
 

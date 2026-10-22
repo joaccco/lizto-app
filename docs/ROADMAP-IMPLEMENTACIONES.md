@@ -1,6 +1,6 @@
 # Roadmap de implementaciones de Lizto
 
-> **Status:** Propuesto · **Owner:** Mateo y Joaco · **Última revisión:** 2026-10-20 · **Fuente de verdad:** Para esta propuesta; el comportamiento se verifica en el código.
+> **Status:** Propuesto · **Owner:** Mateo y Joaco · **Última revisión:** 2026-10-21 · **Fuente de verdad:** Para esta propuesta; el comportamiento se verifica en el código.
 
 > **En 30 segundos.** Primero alinear decisiones y contratos, corregir operaciones inseguras y disponer de un entorno reproducible. Después completar acceso y onboarding, Agenda, cierre y pago, y finalmente Urgencia. La meta es una beta acotada con trabajos reales completados. Este documento conserva el contexto de la conversación; no autoriza implementar todas las etapas ni declara tareas verificadas.
 
@@ -17,10 +17,10 @@
 ## Fuentes y repositorios
 
 - [Lizto Development en Trello](https://trello.com/b/C8KEjcAM/lizto-development): se leyeron 14 listas, 186 tarjetas, incluidas 10 archivadas, y 25 checklists. No se modificó el tablero.
-- [lizto-api](https://github.com/joaccco/lizto-api): backend Laravel; último commit consultado de `main`, 22-09-2026.
+- [lizto-api](https://github.com/joaccco/lizto-api): backend Laravel; copia local `main` en `2f69793`, último commit publicado conocido al 2026-10-21.
 - [lizto](https://github.com/joaccco/lizto): frontend Next.js. El paquete y la documentación lo llaman `lizto-web`; la carpeta local es `../lizto`. Último commit consultado de `main`, 13-09-2026 en Argentina.
-- [lizto-app](https://github.com/joaccco/lizto-app): mobile Expo para cliente y profesional; último commit consultado de `main`, 15-09-2026.
-- [lizto-engineering](https://github.com/joaccco/lizto-engineering): guía compartida. Se leyó la copia local `../lizto-engineering`; la conexión de GitHub devolvió 404, por lo que no se verificó su estado remoto.
+- [lizto-app](https://github.com/joaccco/lizto-app): mobile Expo para cliente y profesional; `main` publicado en `e912a29` al 2026-10-21.
+- [lizto-engineering](https://github.com/joaccco/lizto-engineering): guía compartida. La copia local está en `0258aa5` y tiene modificaciones sin commit; no se verificó el estado remoto en esta ronda.
 - [Auditoría y primera entrega de correcciones](AUDITORIA-2026-10-07.md).
 - [Roadmap móvil anterior](MOBILE_ROADMAP.md): referencia histórica de paridad, contrastar con código y este contexto.
 
@@ -44,9 +44,9 @@ Las etapas siguientes se orientan a entregas **React Native + API**. Cuando una 
 | Web | Compañero de Mateo | Referencia funcional y coordinación de contratos compartidos |
 | Decisiones de producto y cambios de contrato entre aplicaciones | Equipo | Señalar impacto y alternativas; acordar antes de implementar cambios dependientes |
 
-Las correcciones prioritarias de mobile están locales, sin commit ni publicación al momento de esta revisión: URLs, privacidad, almacenamiento seguro, horarios, importes, caché, preguntas y presentación. Se reportaron TypeScript sin errores, 80 tests, Expo Doctor 21/21 y exportación del bundle Android. **No se compiló ni ejecutó un build de desarrollo Android**; faltaba SDK/JDK. Tampoco se probó ese recorrido contra una API real.
+Actualización 2026-10-21: roles/sesión, acceso, registro, recuperación y Google/Facebook están implementados y publicados en app/API donde corresponde. Mateo confirmó en iPhone registro, recuperación y OAuth; M3 continúa por Android y staging compartido. OpenJDK 17 ya está instalado en Homebrew; las herramientas CLI oficiales de Android están descargadas en `/tmp/lizto-android-sdk`, pero aún faltan paquetes del SDK/emulador y aceptación humana de sus licencias. Privacidad de domicilio, consentimiento de Agenda y lectura recuperable de negociación siguen siendo bloqueantes de API.
 
-Actualización 2026-10-20: resolución central del rol implementada, preferencia por cuenta y cambio rápido de vista. Descartar permanece deshabilitado; el endpoint API ya rechaza la tarjeta propia sin cancelar globalmente, pero falta su integración nativa en una entrega propia. Confirmación directa sigue bloqueada por autoadjudicación/precio inventado. Falta lectura recuperable de oferta propia y persiste la deuda de precios decimales. Ver estado vigente en etapa 1.
+Actualización 2026-10-21: resolución central del rol, preferencia por cuenta y cambio rápido se probaron en iPhone. El rechazo individual ya no cancela globalmente, pero falta su aceptación nativa. La confirmación profesional con precio predeterminado sigue bloqueada por consentimiento/precio inventado. Falta lectura recuperable de ofertas/preguntas y persiste la deuda de importes decimales. La API aún puede enviar domicilio exacto antes de confirmar, en conflicto con la decisión de Mateo. Ver estado vigente en etapa 1.
 
 No modificar `lizto-api` desde este repositorio. Las etapas que involucren API o web se trabajan por separado en sus repositorios. No inventar endpoints, datos, precios ni configuración comercial. No agregar pantallas o dependencias sin alcance justificado.
 
@@ -63,9 +63,9 @@ No modificar `lizto-api` desde este repositorio. Las etapas que involucren API o
 
 ## Etapa 1 — Alinear alcance, decisiones y contratos
 
-Entrega iniciada el 2026-10-11: [alcance, contratos revisados y requerimientos de integración](ETAPA-1-ALCANCE-Y-CONTRATOS.md). El inventario se revisó contra API `db4f1e6`; beta confirmada con ambos roles, Agenda/Urgencia y Android/iOS. M1/M2 están implementadas en código y M3 en validación. Contratos B1–B8 definidos como requerimientos con responsable y aceptación, pendientes de ratificar con API. El estado vigente y los límites están en el documento enlazado; no se declara la etapa cerrada.
+Entrega iniciada el 2026-10-11: [alcance, contratos revisados y requerimientos de integración](ETAPA-1-ALCANCE-Y-CONTRATOS.md). La beta incluye ambos roles, Agenda/Urgencia y Android/iOS. M1/M2 se implementaron y probaron en iPhone; M3 está validada en iPhone, pendiente Android y staging. B1, B2 y B4 permanecen «Esperando una decisión» en Trello; la Etapa 1 no está cerrada.
 
-**Implementaciones y acuerdos:** definir los recorridos y plataformas nativas de la beta de la app; asignar responsables; actualizar tarjetas contradictorias; documentar contratos reales de identificadores, paginación, importes, estados y permisos. Resolver vinculación con Google, facturación y precio en Urgencia antes de implementar las partes dependientes.
+**Implementaciones y acuerdos:** mantener sincronizados alcance, responsables y estados; documentar contratos de importes, estados y permisos. Google/Facebook ya tienen ingreso/vinculación probado en iPhone. Resolver privacidad/autorización (B4), consentimiento (B3/B5), negociación recuperable (B2) y habilitación profesional (B1) antes de sus integraciones. Apple requiere membresía paga.
 
 **Por qué:** Trello contiene referencias a Flutter, propuestas de comisión incompatibles con las reglas vigentes y tareas listas que aún tienen dependencias. Programar sobre esas diferencias genera alcance inventado y retrabajo.
 
@@ -97,7 +97,7 @@ Registro nativo (2026-10-21): formulario de alta e ingreso automático implement
 
 Recuperación (2026-10-21): app/API implementadas y SMTP local validado mediante Mailpit; ver [contrato](PASSWORD-RECOVERY-CONTRATO.md). Mateo confirmó en iPhone código de seis dígitos, verificación previa, espera de reenvío e ingreso automático. Correo externo y Android siguen pendientes.
 
-Avance OAuth (2026-10-21): Google y Facebook cuentan con contrato implementado en API `7b16507` e integración React Native de ingreso/vinculación. Ver [contrato y evidencia](OAUTH-MOBILE-CONTRATO.md). La autorización completa con proveedor en dispositivo sigue pendiente; Apple requiere membresía paga. Esto no completa recuperación de contraseña, verificación de correo ni habilitación profesional.
+OAuth (2026-10-21): Google y Facebook cuentan con contrato en API e integración React Native; Mateo confirmó ingreso, vinculación, cancelación y reintento en iPhone. Ver [contrato y evidencia](OAUTH-MOBILE-CONTRATO.md). Apple requiere membresía paga. Verificación de email, correo externo y habilitación profesional siguen pendientes.
 
 **Implementaciones:** acceso en React Native con soporte de API: Google, recuperación y verificación de correo con vinculación segura; registro y onboarding; perfil, rubros, horarios y disponibilidad; Didit con inicio, retorno a la app, estado y recuperación de errores; webhook real en Sandbox. Verificar los contratos y la configuración nativa antes de implementar cada integración.
 
